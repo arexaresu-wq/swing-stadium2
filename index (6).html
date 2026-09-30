@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ふるスマ｜スマホがバットになる野球ゲーム</title>
+<meta name="theme-color" content="#5fb0ec">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ふるスマ">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="スマホをバットのように振って打つ、腕を振って投げる。ブラウザで遊べる野球ゲーム「ふるスマ」。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sky-top:#5fb0ec; --sky-mid:#a9d6f7; --sky-bot:#e6f3fd;
+  --bg:#eef5fb; --card:#ffffff; --ink:#0c1117; --ink-2:#56687a; --line:rgba(12,17,23,.12);
+  --blue:#1463ff; --blue-deep:#0a3db5; --on-blue:#ffffff;
+  --view-top:#1a5ad6; --view-bot:#0a2766;
+  --lamp-off:#dbe5ee; --strike:#ffc21a; --out:#ff4b3e; --hit:#1fc46a;
+  --shadow:0 10px 30px rgba(10,50,120,.14);
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --sky-top:#0b1e45; --sky-mid:#132f62; --sky-bot:#0c1a33;
+    --bg:#0a1322; --card:#121f33; --ink:#f2f6fa; --ink-2:#9aaec2; --line:rgba(242,246,250,.14);
+    --blue:#3d7dff; --blue-deep:#1c4fc4; --view-top:#15418f; --view-bot:#071838;
+    --lamp-off:#1f3049; --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --sky-top:#0b1e45; --sky-mid:#132f62; --sky-bot:#0c1a33;
+  --bg:#0a1322; --card:#121f33; --ink:#f2f6fa; --ink-2:#9aaec2; --line:rgba(242,246,250,.14);
+  --blue:#3d7dff; --blue-deep:#1c4fc4; --view-top:#15418f; --view-bot:#071838;
+  --lamp-off:#1f3049; --shadow:0 10px 30px rgba(0,0,0,.35);
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{height:100%;margin:0;color:var(--ink);
+  background:linear-gradient(180deg,var(--sky-bot) 0%,var(--bg) 45%);background-color:var(--bg);
+  font-family:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif;
+  -webkit-user-select:none;user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.app{height:100%;max-width:520px;margin:0 auto;padding:12px 14px 14px;display:flex;flex-direction:column;gap:12px}
+.display{font-family:"Dela Gothic One","Hiragino Sans","Noto Sans JP",sans-serif;font-weight:400;letter-spacing:.01em}
+
+/* ---------- scoreboard ---------- */
+.board{position:relative;overflow:hidden;background:var(--card);border-radius:16px;box-shadow:var(--shadow);
+  padding:10px 14px 12px;display:grid;grid-template-columns:auto 1fr;gap:8px 18px;align-items:center}
+.board::before{content:"";position:absolute;right:-30px;top:-18px;width:190px;height:34px;background:var(--blue);transform:rotate(-8deg);opacity:.9;
+  clip-path:polygon(4% 30%,100% 0,100% 70%,0 100%)}
+.board::after{content:"";position:absolute;right:-20px;top:4px;width:150px;height:12px;background:var(--ink);transform:rotate(-8deg);
+  clip-path:polygon(6% 40%,100% 0,100% 60%,0 100%)}
+.board h1{grid-column:1/-1;margin:0;font-size:1.25rem;line-height:1;transform:skewX(-10deg);transform-origin:left;position:relative;z-index:1}
+.board h1 small{font-family:"Zen Kaku Gothic New",sans-serif;font-size:.62rem;font-weight:700;color:var(--ink-2);margin-left:8px;letter-spacing:.08em;display:inline-block;transform:skewX(10deg)}
+.lamps{display:flex;flex-direction:column;gap:6px}
+.lrow{display:flex;gap:7px;align-items:center}
+.lrow b{font-family:"Dela Gothic One",sans-serif;font-weight:400;font-size:1rem;width:1.1em;color:var(--ink-2)}
+.lamp{width:16px;height:16px;border-radius:50%;background:var(--lamp-off);transition:background .15s,box-shadow .15s}
+.lamp.s.on{background:var(--strike);box-shadow:0 0 0 3px color-mix(in srgb,var(--strike) 25%,transparent)}
+.lamp.o.on{background:var(--out);box-shadow:0 0 0 3px color-mix(in srgb,var(--out) 25%,transparent)}
+.lamp.b.on{background:var(--hit);box-shadow:0 0 0 3px color-mix(in srgb,var(--hit) 25%,transparent)}
+.stats{margin:0;display:flex;justify-content:flex-end;gap:16px}
+.stats div{text-align:center}
+.stats dt{font-size:.7rem;font-weight:700;color:var(--ink-2);letter-spacing:.05em}
+.stats dd{margin:0;font-family:"Dela Gothic One",sans-serif;font-size:1.7rem;line-height:1.1;font-variant-numeric:tabular-nums}
+
+/* ---------- panels ---------- */
+.stage{flex:1;min-height:0;display:flex;flex-direction:column}
+.panel{flex:1;overflow:auto;display:flex;flex-direction:column;gap:14px;padding:4px 2px}
+.panel h2{margin:0;font-size:1.55rem;line-height:1.3;transform:skewX(-8deg);transform-origin:left}
+.panel p{margin:0;line-height:1.75}
+.ib{display:flex;flex-direction:column;gap:14px}
+.steps{margin:0;padding:0;list-style:none;counter-reset:st;display:flex;flex-direction:column;gap:8px}
+.steps li{counter-increment:st;display:flex;gap:12px;align-items:center;background:var(--card);border-radius:12px;padding:10px 12px;box-shadow:0 2px 8px rgba(10,50,120,.06)}
+.steps li::before{content:counter(st);font-family:"Dela Gothic One",sans-serif;width:28px;height:28px;flex:none;border-radius:50%;
+  background:var(--ink);color:var(--card);display:grid;place-items:center;font-size:.9rem}
+.steps em{font-style:normal;font-weight:700;color:var(--blue)}
+.note{font-size:.86rem;color:var(--ink-2);border-left:4px solid var(--blue);background:color-mix(in srgb,var(--blue) 8%,transparent);
+  padding:10px 12px;border-radius:0 10px 10px 0}
+.err{font-size:.9rem;border-left:4px solid var(--out);background:color-mix(in srgb,var(--out) 8%,transparent);padding:10px 12px;border-radius:0 10px 10px 0}
+.actions{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+.pitchers{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pcard{text-align:left;background:var(--card);color:var(--ink);border:2px solid transparent;border-radius:14px;padding:10px 12px;min-height:0;
+  display:flex;flex-direction:column;gap:3px;box-shadow:0 2px 8px rgba(10,50,120,.06)}
+.pcard[aria-pressed="true"]{border-color:var(--blue);box-shadow:0 8px 20px color-mix(in srgb,var(--blue) 25%,transparent)}
+.pcard .pc-name{font-family:"Dela Gothic One",sans-serif;font-weight:400;font-size:1.15rem;transform:skewX(-8deg);transform-origin:left}
+.pcard[aria-pressed="true"] .pc-name{color:var(--blue)}
+.pcard .pc-top{font-size:.72rem;font-weight:700;color:var(--ink-2)}
+.pcard .pc-list{font-size:.72rem;font-weight:500;color:var(--ink-2);line-height:1.5}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--lamp-off);padding:4px;border-radius:14px}
+.seg button{border:0;background:transparent;color:var(--ink-2);min-height:42px;padding:8px;font-size:.92rem;border-radius:10px;box-shadow:none}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 2px 8px rgba(10,50,120,.12)}
+.tbtn.tbtn-online{grid-column:1/-1;min-height:62px;flex-direction:row;align-items:center;justify-content:space-between;background:#ffffff;color:#0c1117}
+.tbtn.tbtn-online .tb-main{font-size:1.5rem}
+.tbtn-online::after{background:rgba(20,99,255,.18)}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .tbtn.tbtn-online{background:#122036;color:#f2f6fa} }
+:root[data-theme="dark"] .tbtn.tbtn-online{background:#122036;color:#f2f6fa}
+.joinrow{display:flex;gap:8px}
+.joinrow input{flex:1;min-width:0;font:inherit;font-weight:700;font-size:1.3rem;padding:10px 14px;border-radius:14px;border:1.5px solid var(--line);
+  background:var(--card);color:var(--ink);letter-spacing:.3em;text-align:center;min-height:52px;-webkit-user-select:text;user-select:text}
+.joinrow input:focus{outline:3px solid var(--blue);outline-offset:1px}
+.joinrow button{flex:none;min-width:88px}
+.roombox{background:var(--card);border-radius:16px;padding:14px;box-shadow:var(--shadow);text-align:center}
+.roomcode{font-size:3.4rem;margin:0;letter-spacing:.18em;color:var(--blue);transform:skewX(-8deg)}
+.sec-label{margin:0;font-size:.78rem;font-weight:700;color:var(--ink-2);letter-spacing:.08em}
+.back{align-self:flex-start;background:none;border:0;color:var(--ink-2);padding:6px 0;min-height:36px;font-size:.9rem}
+
+button{font:inherit;font-weight:700;border-radius:14px;padding:14px 16px;cursor:pointer;min-height:48px;transition:transform .08s,box-shadow .15s,background .15s}
+button:active{transform:translateY(1px) scale(.99)}
+button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.primary{background:var(--blue);color:var(--on-blue);border:0;font-size:1.05rem;box-shadow:0 8px 20px color-mix(in srgb,var(--blue) 35%,transparent)}
+.ghost{background:var(--card);color:var(--ink);border:1.5px solid var(--line)}
+.dots{display:flex;gap:14px}
+.dots i{width:40px;height:40px;border-radius:50%;border:2.5px dashed var(--ink-2)}
+.dots i.done{background:var(--blue);border:2.5px solid var(--blue);box-shadow:0 6px 14px color-mix(in srgb,var(--blue) 35%,transparent)}
+
+/* ---------- play views ---------- */
+.play{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+.view{flex:1;min-height:180px;position:relative;border-radius:18px;overflow:hidden;box-shadow:var(--shadow);
+  background:
+    repeating-linear-gradient(115deg,rgba(255,255,255,.035) 0 18px,transparent 18px 40px),
+    radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.22),transparent 60%),
+    linear-gradient(180deg,var(--view-top),var(--view-bot))}
+.zone{position:absolute;left:50%;top:72%;width:34%;aspect-ratio:3/4;transform:translate(-50%,-50%);border:2px dashed rgba(255,255,255,.35);border-radius:4px}
+.mound{position:absolute;left:50%;top:14%;width:24px;height:24px;transform:translate(-50%,-50%);border-radius:50%;background:rgba(255,255,255,.14)}
+.ball{position:absolute;left:50%;width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#dcd8cc);
+  box-shadow:0 4px 14px rgba(0,0,0,.35);transform:translate(-50%,-50%) scale(.1);opacity:0}
+#fieldView,#zoneSvg{position:absolute;inset:0;width:100%;height:100%}
+.msg{margin:0;text-align:center;font-size:clamp(2.2rem,12vw,3.6rem);line-height:1.15;min-height:1.2em;transform:skewX(-9deg)}
+.msg.big{color:var(--blue);text-shadow:3px 3px 0 color-mix(in srgb,var(--ink) 15%,transparent)}
+.msg.good{color:var(--blue)}
+.msg.bad{color:var(--ink-2)}
+.detail{margin:0;text-align:center;font-size:.9rem;color:var(--ink-2);min-height:2.8em;line-height:1.5}
+.tapHint{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:.85rem;color:rgba(255,255,255,.75)}
+.ptypes{display:flex;flex-wrap:wrap;gap:6px}
+.ptypes button{flex:0 0 auto;padding:8px 14px;min-height:40px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font-size:.9rem;border-radius:999px}
+.ptypes button[aria-pressed="true"]{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.ptypes button:disabled,.cell.off{opacity:.45}
+.cell{fill:transparent;cursor:pointer}
+.cell:hover{fill:rgba(255,255,255,.08)}
+
+/* ---------- footer controls ---------- */
+.controls{display:flex;flex-direction:column;gap:8px}
+.meter{height:8px;background:var(--lamp-off);border-radius:4px;overflow:hidden;position:relative}
+.meter span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),#27c2ff);border-radius:4px}
+.meter .th{position:absolute;top:0;bottom:0;width:2px;background:var(--ink)}
+.meterLabel{font-size:.72rem;font-weight:700;color:var(--ink-2);display:flex;justify-content:space-between;letter-spacing:.04em}
+.btns{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}
+.btns button{padding:10px;min-height:44px;font-size:.9rem}
+
+/* ---------- title screen ---------- */
+.title{position:fixed;inset:0;z-index:10;overflow:hidden;color:#0c1117;
+  background:linear-gradient(180deg,var(--sky-top) 0%,var(--sky-mid) 48%,var(--sky-bot) 100%);
+  padding:calc(env(safe-area-inset-top,0px) + 20px) 20px calc(env(safe-area-inset-bottom,0px) + 20px)}
+.title::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(-20deg,transparent 0 60px,rgba(255,255,255,.12) 60px 62px,transparent 62px 130px)}
+.brush{position:absolute;pointer-events:none}
+.brush-tl{left:-40px;top:calc(env(safe-area-inset-top,0px) - 10px);width:min(78vw,380px)}
+.brush-br{right:-50px;bottom:calc(env(safe-area-inset-bottom,0px) + 150px);width:min(80vw,400px)}
+.bigball{position:absolute;left:50%;top:50%;width:min(46vw,230px);transform:translate(-50%,-50%) rotate(-18deg);opacity:.95;pointer-events:none;
+  filter:drop-shadow(0 18px 24px rgba(10,40,100,.25))}
+.title-inner{position:relative;z-index:1;height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;align-items:center}
+.logo-wrap{margin-top:12vh;text-align:center;width:100%}
+.kicker{margin:0 0 4px;display:inline-block;background:#0c1117;color:#fff;font-weight:700;font-size:.8rem;letter-spacing:.12em;padding:5px 12px;transform:skewX(-12deg)}
+.kicker span{display:inline-block;transform:skewX(12deg)}
+.logo{display:block;width:100%;max-width:420px;margin:0 auto}
+.logo .ink{fill:#0c1117}
+.brush .ink{fill:#0c1117}
+.brush .blu{fill:#1463ff}
+.logo .blu{fill:#1463ff}
+.logo .stitch{stroke:#ffffff}
+.logo .speed{stroke:#0c1117}
+.tagline{margin:6px 0 0;font-family:"Dela Gothic One",sans-serif;font-size:1.05rem;transform:skewX(-8deg);letter-spacing:.04em}
+.title-btns{margin-top:auto;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tbtn{position:relative;overflow:hidden;border:0;border-radius:18px;padding:16px 14px;min-height:96px;text-align:left;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;
+  box-shadow:0 12px 26px rgba(10,40,100,.28)}
+.tbtn::after{content:"";position:absolute;right:-18px;top:-10px;width:90px;height:22px;background:rgba(255,255,255,.18);transform:rotate(-18deg)}
+.tbtn-bat{background:#0c1117;color:#fff}
+.tbtn-pitch{background:#1463ff;color:#fff}
+.tb-main{font-family:"Dela Gothic One",sans-serif;font-size:1.9rem;line-height:1;transform:skewX(-10deg);transform-origin:left}
+.tb-sub{font-size:.74rem;font-weight:700;opacity:.8}
+.install{margin-top:12px;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.75);color:#0c1117;border:0;border-radius:999px;
+  padding:8px 16px;min-height:40px;font-size:.85rem;box-shadow:0 4px 14px rgba(10,40,100,.15)}
+.install-tip{margin-top:10px;background:#ffffff;color:#0c1117;border-radius:14px;padding:12px 14px;font-size:.84rem;line-height:1.7;text-align:left;
+  box-shadow:0 8px 24px rgba(10,40,100,.2);max-width:360px}
+.install-tip b{color:#1463ff}
+.title.tip-open .bigball{display:none}
+.title-foot{margin:14px 0 0;font-size:.74rem;font-weight:700;color:rgba(12,17,23,.6)}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .title{color:#f2f6fa}
+  :root:not([data-theme="light"]) .logo .ink{fill:#f2f6fa}
+  :root:not([data-theme="light"]) .kicker{background:#f2f6fa;color:#0c1117}
+  :root:not([data-theme="light"]) .tbtn-bat{background:#f2f6fa;color:#0c1117}
+  :root:not([data-theme="light"]) .title-foot{color:rgba(242,246,250,.6)}
+  :root:not([data-theme="light"]) .brush .ink{fill:#f2f6fa}
+  :root:not([data-theme="light"]) .logo .stitch{stroke:#0c1117}
+  :root:not([data-theme="light"]) .logo .speed{stroke:#f2f6fa}
+}
+:root[data-theme="dark"] .title{color:#f2f6fa}
+:root[data-theme="dark"] .logo .ink,:root[data-theme="dark"] .brush .ink{fill:#f2f6fa}
+:root[data-theme="dark"] .logo .stitch{stroke:#0c1117}
+:root[data-theme="dark"] .logo .speed{stroke:#f2f6fa}
+:root[data-theme="dark"] .kicker{background:#f2f6fa;color:#0c1117}
+:root[data-theme="dark"] .tbtn-bat{background:#f2f6fa;color:#0c1117}
+
+@keyframes slam{0%{opacity:0;transform:scale(1.35) rotate(-3deg)}60%{opacity:1;transform:scale(.97)}100%{transform:scale(1)}}
+@keyframes wipe{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes spin{from{transform:translate(-50%,-50%) rotate(-18deg) scale(.6);opacity:0}to{transform:translate(-50%,-50%) rotate(-18deg);opacity:.95}}
+.title .logo{animation:slam .55s cubic-bezier(.2,.9,.3,1.2) both .15s}
+.title .brush{animation:wipe .5s ease-out both}
+.title .brush-br{animation-delay:.1s}
+.title .bigball{animation:spin .6s ease-out both .3s}
+.title .kicker,.title .tagline{animation:rise .5s ease-out both .45s}
+.title .title-btns{animation:rise .5s ease-out both .6s}
+@media (prefers-reduced-motion: reduce){ .title *{animation:none!important} .lamp{transition:none} }
+</style>
+</head>
+<body>
+<section id="title" class="title">
+  <svg class="brush brush-tl" viewBox="0 0 400 200" aria-hidden="true">
+    <defs><filter id="fBrush" x="-10%" y="-30%" width="120%" height="160%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.006 0.09" numOctaves="3" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="14" xChannelSelector="R" yChannelSelector="G"/></filter></defs>
+    <g filter="url(#fBrush)">
+      <path class="ink" d="M-30 120 L330 -12 L350 8 L-20 158 Z"/>
+      <path class="blu" d="M-30 168 L300 50 L312 66 L-24 190 Z"/>
+      <path class="ink" d="M40 150 L380 20 L384 28 L44 160 Z" opacity=".85"/>
+    </g>
+  </svg>
+  <svg class="brush brush-br" viewBox="0 0 400 200" aria-hidden="true">
+    <g filter="url(#fBrush)">
+      <path class="blu" d="M20 170 L420 30 L430 52 L30 196 Z"/>
+      <path class="ink" d="M70 150 L420 20 L424 34 L76 166 Z"/>
+      <path class="ink" d="M150 190 L430 90 L432 98 L152 200 Z" opacity=".8"/>
+    </g>
+  </svg>
+  <svg class="bigball" viewBox="0 0 200 200" aria-hidden="true">
+    <defs><radialGradient id="gBall" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#ffffff"/><stop offset=".7" stop-color="#eef0f2"/><stop offset="1" stop-color="#c9ced6"/></radialGradient></defs>
+    <circle cx="100" cy="100" r="92" fill="url(#gBall)"/>
+    <path d="M42 30 C78 62 78 138 42 170" fill="none" stroke="#d8323a" stroke-width="3.5" stroke-dasharray="7 6"/>
+    <path d="M158 30 C122 62 122 138 158 170" fill="none" stroke="#d8323a" stroke-width="3.5" stroke-dasharray="7 6"/>
+    <path d="M47 34 C82 64 82 136 47 166 M153 34 C118 64 118 136 153 166" fill="none" stroke="#e7a0a4" stroke-width="1.2"/>
+  </svg>
+  <div class="title-inner">
+    <div class="logo-wrap">
+      <p class="kicker"><span>スマホがバットになる野球ゲーム</span></p>
+      <svg class="logo" viewBox="0 0 420 190" role="img" aria-label="ふるスマ">
+        <defs><filter id="fRough" x="-10%" y="-20%" width="120%" height="140%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.03 0.18" numOctaves="2" seed="9" result="n"/>
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="4" xChannelSelector="R" yChannelSelector="G"/></filter></defs>
+        <g filter="url(#fRough)">
+          <path class="blu" d="M28 64 L128 30 L132 42 L32 76 Z"/>
+          <text class="ink" x="222" y="126" text-anchor="middle" transform="skewX(-10)" font-family="'Dela Gothic One','Hiragino Sans',sans-serif" font-size="92">ふるスマ</text>
+          <path class="ink" d="M26 168 C120 152 230 142 332 134 L336 144 C236 154 128 166 32 180 Z"/>
+          <path class="blu" d="M300 30 L400 6 L402 16 L304 40 Z"/>
+        </g>
+        <g transform="translate(362 136)">
+          <path class="speed" d="M-58 -2 L-30 -6 M-62 10 L-28 4 M-50 20 L-26 14" stroke-width="3" stroke-linecap="round" opacity=".6"/>
+          <circle class="ink" r="24"/>
+          <path class="stitch" d="M-12 -20 C-4 -8 -4 8 -12 20 M12 -20 C4 -8 4 8 12 20" fill="none" stroke-width="2.4" stroke-dasharray="3 2.6"/>
+        </g>
+      </svg>
+      <p class="tagline">振って打つ。振って投げる。</p>
+    </div>
+    <div class="title-btns">
+      <button id="modeBat" class="tbtn tbtn-bat" aria-pressed="true"><span class="tb-main">打つ</span><span class="tb-sub">音に合わせて振る</span></button>
+      <button id="modePitch" class="tbtn tbtn-pitch" aria-pressed="false"><span class="tb-main">投げる</span><span class="tb-sub">コースを狙って投げる</span></button>
+      <button id="modeOnline" class="tbtn tbtn-online"><span class="tb-main">対戦</span><span class="tb-sub">友達と2台で打って投げる</span></button>
+    </div>
+    <button class="install" id="btnInstall" hidden>＋ ホーム画面に追加してアプリのように遊ぶ</button>
+    <div class="install-tip" id="installTip" hidden></div>
+    <p class="title-foot">ストラップを付けて、周りに注意して遊んでね</p>
+  </div>
+</section>
+<div class="app">
+  <header class="board" id="board" hidden>
+    <h1 class="display">ふるスマ<small>フルスマ野球</small></h1>
+    <div class="lamps" aria-label="カウント">
+      <div class="lrow" id="bRow" hidden><b>B</b><i class="lamp b"></i><i class="lamp b"></i><i class="lamp b"></i></div>
+      <div class="lrow"><b>S</b><i class="lamp s"></i><i class="lamp s"></i></div>
+      <div class="lrow"><b>O</b><i class="lamp o"></i><i class="lamp o"></i></div>
+    </div>
+    <dl class="stats">
+      <div><dt id="stL1">打席</dt><dd id="stPa">0</dd></div>
+      <div><dt id="stL2">安打</dt><dd id="stHit">0</dd></div>
+      <div><dt id="stL3">本塁打</dt><dd id="stHr">0</dd></div>
+    </dl>
+  </header>
+
+  <main class="stage">
+    <section id="intro" class="panel" hidden>
+      <button class="back" id="btnBack">‹ タイトルへ</button>
+      <div class="ib" id="introBat">
+      <h2 class="display">音を聞いて、スマホで打つ</h2>
+      <ol class="steps">
+        <li><span><em>ピッ</em>でピッチャーが構える</span></li>
+        <li><span><em>パン</em>で投球</span></li>
+        <li><span><em>シュー</em>が一番大きくなった瞬間にスマホを振る</span></li>
+      </ol>
+      <p>早く振れば引っ張り、遅れれば流し打ち。3アウトでゲームセットです。</p>
+      <p class="sec-label">対戦するピッチャー</p>
+      <div class="pitchers" id="pitchers" role="group" aria-label="対戦するピッチャー"></div>
+      </div>
+      <div class="ib" id="introPitch" hidden>
+        <h2 class="display">腕を振って、スマホで投げる</h2>
+        <ol class="steps">
+          <li><span>画面で<em>球種</em>と<em>狙うコース</em>を選ぶ</span></li>
+          <li><span><em>セット</em>を押して構える</span></li>
+          <li><span>スマホをしっかり握ったまま、投げる動きで腕を振る</span></li>
+        </ol>
+        <p>腕の振りが速いほど球速アップ。基本は狙ったコースに決まりますが、いつもより強く振りすぎると、わずかに外れてボールになります。3アウトを取ったら試合終了です。</p>
+      </div>
+      <p class="note">ストラップを手首に通し、スマホは絶対に手から離さないでください。周りに人や物がないことを確かめてから振りましょう。マナーモードだと音が鳴らないことがあります。</p>
+      <div class="actions">
+        <button class="primary" id="btnSensor">センサーを許可して始める</button>
+        <button class="ghost" id="btnTap">画面タップで遊ぶ</button>
+        <button class="ghost" id="btnTest">音をテストする</button>
+        <p id="testInfo" class="detail" style="text-align:left" hidden></p>
+      </div>
+    </section>
+
+    <section id="lobby" class="panel" hidden>
+      <button class="back" id="btnLobbyBack">‹ タイトルへ</button>
+      <h2 class="display">通信対戦</h2>
+      <p>2台のスマホで、投げる側と打つ側に分かれて対戦します。片方が部屋を作り、もう片方が4桁の番号で入ってください。2イニング制で、点の多いほうが勝ちです。</p>
+      <div class="seg" role="group" aria-label="操作方法">
+        <button id="lbSensor" aria-pressed="true">スマホを振って遊ぶ</button>
+        <button id="lbTap" aria-pressed="false">タップで遊ぶ</button>
+      </div>
+      <div id="lobbyForm" class="ib">
+        <button class="primary" id="btnCreate">部屋を作る</button>
+        <p class="sec-label">友達の部屋に入る</p>
+        <div class="joinrow">
+          <input id="roomInput" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="番号" aria-label="部屋番号" autocomplete="off">
+          <button class="ghost" id="btnJoin">入る</button>
+        </div>
+      </div>
+      <div id="roomBox" class="roombox" hidden>
+        <p class="sec-label" id="roomLabel">部屋番号</p>
+        <p class="roomcode display" id="roomCode">----</p>
+        <p class="detail" id="lobbyStatus"></p>
+      </div>
+      <p class="err" id="lobbyErr" hidden></p>
+      <p class="note">通信には無料の中継サーバー（PeerJS）を使っています。つながらないときは、少し待ってからやり直してください。</p>
+      <div class="actions"><button class="ghost" id="btnLobbyCancel" hidden>やめる</button></div>
+    </section>
+
+    <section id="calib" class="panel" hidden>
+      <h2 class="display" id="calibTitle">素振りを3回</h2>
+      <p id="calibDesc">いつもの強さで3回振ってください。振りの速さに合わせて感度を調整します。</p>
+      <div class="dots"><i></i><i></i><i></i></div>
+      <p id="calibInfo" class="detail" style="text-align:left"></p>
+      <p id="sensorErr" class="err" hidden></p>
+      <p id="sensorDiag" class="detail" style="text-align:left;font-size:.78rem" hidden></p>
+      <div class="actions">
+        <button class="primary" id="btnOpen" hidden>別の画面で開く</button>
+        <button class="primary" id="btnBat" hidden>打席に入る</button>
+        <button class="ghost" id="btnSkip">調整せずに打席に入る</button>
+        <button class="ghost" id="btnTap2" hidden>画面タップで遊ぶ</button>
+      </div>
+    </section>
+
+    <section id="play" class="play" hidden>
+      <div class="view" id="view">
+        <div id="pitchView">
+          <div class="mound"></div>
+          <div class="zone"></div>
+          <div class="ball" id="ball"></div>
+        </div>
+        <svg id="fieldView" viewBox="-135 -132 270 142" preserveAspectRatio="xMidYMid meet" hidden aria-label="打球方向">
+          <path d="M0 0 L-95 -95 M0 0 L95 -95" stroke="rgba(245,244,238,.55)" stroke-width="1.2"/>
+          <path d="M-84.85 -84.85 A120 120 0 0 1 84.85 -84.85" fill="none" stroke="rgba(245,244,238,.8)" stroke-width="2"/>
+          <path d="M0 0 L19 -19 L0 -38 L-19 -19 Z" fill="rgba(160,110,60,.35)" stroke="rgba(245,244,238,.4)" stroke-width=".8"/>
+          <text x="-70" y="-28" fill="rgba(245,244,238,.5)" font-size="9" text-anchor="middle">レフト</text>
+          <text x="0" y="-100" fill="rgba(245,244,238,.5)" font-size="9" text-anchor="middle">センター</text>
+          <text x="70" y="-28" fill="rgba(245,244,238,.5)" font-size="9" text-anchor="middle">ライト</text>
+          <line id="traj" x1="0" y1="0" x2="0" y2="0" stroke="#f5f4ee" stroke-width="1.4" stroke-dasharray="3 3"/>
+          <circle id="dot" cx="0" cy="0" r="4.5" fill="#f2c230"/>
+        </svg>
+        <p class="tapHint" id="tapHint" hidden>タイミングよく画面をタップ（スペースキーでも可）</p>
+      </div>
+      <p id="msg" class="msg display"></p>
+      <p id="detail" class="detail"></p>
+    </section>
+
+    <section id="pplay" class="play" hidden>
+      <div class="ptypes" id="ptypes" role="group" aria-label="球種"></div>
+      <div class="view">
+        <svg id="zoneSvg" viewBox="-110 -125 220 250" preserveAspectRatio="xMidYMid meet" aria-label="ストライクゾーン">
+          <rect x="-104" y="-119" width="208" height="238" fill="none" stroke="rgba(245,244,238,.12)" stroke-dasharray="4 4"/>
+          <rect x="-60" y="-75" width="120" height="150" fill="rgba(245,244,238,.05)" stroke="rgba(245,244,238,.75)" stroke-width="2"/>
+          <path d="M-20 -75V75M20 -75V75M-60 -25H60M-60 25H60" stroke="rgba(245,244,238,.25)" stroke-width="1"/>
+          <text x="-100" y="112" fill="rgba(245,244,238,.45)" font-size="9">内角</text>
+          <text x="100" y="112" fill="rgba(245,244,238,.45)" font-size="9" text-anchor="end">外角</text>
+          <g id="cells"></g>
+          <g id="marks"></g>
+          <g id="aimMark" pointer-events="none">
+            <circle r="12" fill="none" stroke="#f2c230" stroke-width="2"/>
+            <path d="M-17 0H-7M7 0H17M0 -17V-7M0 7V17" stroke="#f2c230" stroke-width="2"/>
+          </g>
+          <circle id="pball" r="3" fill="#fff" opacity="0" pointer-events="none"/>
+        </svg>
+      </div>
+      <p id="pmsg" class="msg display"></p>
+      <p id="pdetail" class="detail" style="white-space:pre-line"></p>
+      <button class="primary" id="btnSet">セット</button>
+    </section>
+
+    <section id="over" class="panel" hidden>
+      <h2 class="display">ゲームセット</h2>
+      <p id="overStats" style="font-size:1.15rem"></p>
+      <div class="actions">
+        <button class="primary" id="btnAgain">もう一度プレイ</button>
+        <button class="ghost" id="btnMenu">タイトルに戻る</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls" id="controls" hidden>
+    <div id="meterBox">
+      <div class="meterLabel"><span id="meterName">スイング速度</span><span id="meterVal">0°/s</span></div>
+      <div class="meter"><span id="meter"></span><i class="th" id="meterTh"></i></div>
+    </div>
+    <div class="btns">
+      <button class="ghost" id="btnPause">一時停止</button>
+      <button class="ghost" id="btnRecal">素振りし直す</button>
+      <button class="ghost" id="btnQuit">やめる</button>
+    </div>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const METER_MAX = 2200;
+
+let ctx = null, noiseBuf = null, master = null, ballBus = null, hitBus = null, outBus = null;
+let mode = 'sensor';          // 'sensor' | 'tap'
+let phase = 'intro';          // intro | calib | wait | pitch | over
+let threshold = 350, refPeak = 1100;
+let gotMotion = false, curMag = 0, listening = false;
+let above = false, peak = 0, peakT = 0, peakVec = null, lastSwingAt = -1e9;
+let calibPeaks = [];
+let game = null, pitch = null, paused = false, nextTimer = null, wakeLock = null;
+
+/* ---------- audio ---------- */
+let silentAudio = null;
+function makeSilentWavUrl(){
+  const sr = 8000, n = sr / 2, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+  const w = (o, str) => { for(let i=0;i<str.length;i++) v.setUint8(o+i, str.charCodeAt(i)); };
+  w(0,'RIFF'); v.setUint32(4, 36 + n*2, true); w(8,'WAVE'); w(12,'fmt ');
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
+  w(36,'data'); v.setUint32(40, n*2, true);
+  return URL.createObjectURL(new Blob([buf], {type:'audio/wav'}));
+}
+function unlockIosAudio(){
+  // iOS 17以降：音声をメディア再生扱いにして、マナーモードでも鳴るようにする
+  try{ if(navigator.audioSession) navigator.audioSession.type = 'playback'; }catch(e){}
+  // 古いiOS向け：無音の<audio>をループ再生しておくと同じ効果がある
+  try{
+    if(!silentAudio){
+      silentAudio = new Audio(makeSilentWavUrl());
+      silentAudio.loop = true; silentAudio.setAttribute('playsinline', '');
+    }
+    const pr = silentAudio.play(); if(pr) pr.catch(() => {});
+  }catch(e){}
+}
+function initAudio(){
+  unlockIosAudio();
+  if(!ctx){
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const len = ctx.sampleRate;
+    noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i] = Math.random()*2-1;
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -8; comp.ratio.value = 4; comp.attack.value = .002; comp.release.value = .12;
+    master = ctx.createGain(); master.gain.value = 1.8;
+    master.connect(comp).connect(ctx.destination);
+    ballBus = ctx.createGain(); ballBus.gain.value = .4; ballBus.connect(master);   // 投球まわりの音
+    hitBus  = ctx.createGain(); hitBus.gain.value = 1.6; hitBus.connect(master);    // 打球音・空振り
+    outBus = master;
+  }
+  if(ctx.state !== 'running') ctx.resume().catch(() => {});
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  g.gain.value = 0; o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + .02);
+}
+function tone(t, freq, dur, vol=.3, type='sine'){
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + .005);
+  g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(g).connect(outBus); o.start(t); o.stop(t + dur + .02);
+  return o;
+}
+function noise(t, dur, {f0=1000, f1=f0, q=1, v0=.3, v1=.0001, type='bandpass'} = {}){
+  const s = ctx.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+  const f = ctx.createBiquadFilter(); f.type = type; f.Q.value = q;
+  f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  const g = ctx.createGain(); g.gain.setValueAtTime(v0, t); g.gain.exponentialRampToValueAtTime(v1, t + dur);
+  s.connect(f).connect(g).connect(outBus); s.start(t); s.stop(t + dur + .01);
+  return s;
+}
+const sndSet = t => { tone(t, 1320, .1, .25); };
+const sndRelease = t => { noise(t, .07, {f0:2000, f1:500, q:.7, v0:.6}); tone(t, 160, .09, .35, 'triangle'); };
+// 以下、投球系の音はballBus、打球系はhitBusに流す（定義の後で包み直す）
+// ボールの接近音：リリースから到達まで音量と音程が上がり続け、到達の瞬間にピタッと切れる
+function sndWhoosh(t0, t1){
+  const dur = t1 - t0;
+  // 風切り音（ノイズ）
+  const s = ctx.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+  const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.4;
+  f.frequency.setValueAtTime(350, t0); f.frequency.exponentialRampToValueAtTime(3800, t1);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(.004, t0);
+  g.gain.exponentialRampToValueAtTime(.12, t0 + dur * .6);
+  g.gain.exponentialRampToValueAtTime(1.1, t1);
+  g.gain.setValueAtTime(1.1, t1);
+  g.gain.linearRampToValueAtTime(.0001, t1 + .03);
+  s.connect(f).connect(g).connect(outBus); s.start(t0); s.stop(t1 + .05);
+  // 近づいてくる「ヒュイーン」という音程の上昇
+  const o = ctx.createOscillator(); o.type = 'sine';
+  o.frequency.setValueAtTime(260, t0); o.frequency.exponentialRampToValueAtTime(1500, t1);
+  const og = ctx.createGain();
+  og.gain.setValueAtTime(.002, t0);
+  og.gain.exponentialRampToValueAtTime(.05, t0 + dur * .6);
+  og.gain.exponentialRampToValueAtTime(.35, t1);
+  og.gain.setValueAtTime(.35, t1);
+  og.gain.linearRampToValueAtTime(.0001, t1 + .03);
+  o.connect(og).connect(outBus); o.start(t0); o.stop(t1 + .05);
+}
+// カーブ：「ヒュルルゥ〜」…音程が山なりに上下し、うねりながら落ちてくる
+function sndWhooshCurve(t0, t1){
+  const dur = t1 - t0;
+  const s = ctx.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+  const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 2.2;
+  f.frequency.setValueAtTime(500, t0);
+  f.frequency.exponentialRampToValueAtTime(2600, t0 + dur * .35);
+  f.frequency.exponentialRampToValueAtTime(900, t0 + dur * .8);
+  f.frequency.exponentialRampToValueAtTime(1800, t1);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(.004, t0); g.gain.exponentialRampToValueAtTime(.2, t0 + dur * .5);
+  g.gain.exponentialRampToValueAtTime(1.0, t1); g.gain.setValueAtTime(1.0, t1); g.gain.linearRampToValueAtTime(.0001, t1 + .03);
+  s.connect(f).connect(g).connect(outBus); s.start(t0); s.stop(t1 + .05);
+  // うねり（ビブラート付きの笛のような音）
+  const o = ctx.createOscillator(); o.type = 'triangle';
+  o.frequency.setValueAtTime(700, t0);
+  o.frequency.exponentialRampToValueAtTime(1300, t0 + dur * .35);
+  o.frequency.exponentialRampToValueAtTime(420, t1);
+  const lfo = ctx.createOscillator(), lg = ctx.createGain();
+  lfo.frequency.value = 9; lg.gain.value = 60; lfo.connect(lg).connect(o.frequency);
+  const og = ctx.createGain();
+  og.gain.setValueAtTime(.002, t0); og.gain.exponentialRampToValueAtTime(.08, t0 + dur * .5);
+  og.gain.exponentialRampToValueAtTime(.3, t1); og.gain.setValueAtTime(.3, t1); og.gain.linearRampToValueAtTime(.0001, t1 + .03);
+  o.connect(og).connect(outBus); o.start(t0); o.stop(t1 + .05); lfo.start(t0); lfo.stop(t1 + .05);
+}
+// スライダー：ストレートに近いが、最後に音程がクッと鋭く下がる
+function sndWhooshSlider(t0, t1){
+  const dur = t1 - t0, tb = t0 + dur * .75;
+  const s = ctx.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+  const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.6;
+  f.frequency.setValueAtTime(400, t0); f.frequency.exponentialRampToValueAtTime(3400, tb); f.frequency.exponentialRampToValueAtTime(1500, t1);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(.004, t0); g.gain.exponentialRampToValueAtTime(.15, t0 + dur * .6);
+  g.gain.exponentialRampToValueAtTime(1.05, t1); g.gain.setValueAtTime(1.05, t1); g.gain.linearRampToValueAtTime(.0001, t1 + .03);
+  s.connect(f).connect(g).connect(outBus); s.start(t0); s.stop(t1 + .05);
+  const o = ctx.createOscillator(); o.type = 'sawtooth';
+  o.frequency.setValueAtTime(300, t0); o.frequency.exponentialRampToValueAtTime(1700, tb); o.frequency.exponentialRampToValueAtTime(650, t1);
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2200;
+  const og = ctx.createGain();
+  og.gain.setValueAtTime(.001, t0); og.gain.exponentialRampToValueAtTime(.03, t0 + dur * .6);
+  og.gain.exponentialRampToValueAtTime(.16, t1); og.gain.setValueAtTime(.16, t1); og.gain.linearRampToValueAtTime(.0001, t1 + .03);
+  o.connect(lp).connect(og).connect(outBus); o.start(t0); o.stop(t1 + .05);
+}
+// 到達の瞬間を示す短い「チッ」（打った場合は止める）
+const sndArrive = t => [tone(t, 2600, .035, .4, 'square')];
+const sndMitt = t => [noise(t, .07, {f0:1200, f1:250, q:.9, v0:.9, type:'lowpass'}), tone(t, 110, .08, .5, 'triangle')];
+// 金属音の響き：partials=[周波数, 音量]の組、dur=余韻の長さ、echo=球場の反響
+function ring(t, partials, dur, echo=0){
+  const out = ctx.createGain(); out.gain.value = 1; out.connect(outBus);
+  if(echo){
+    const dl = ctx.createDelay(1); dl.delayTime.value = .13;
+    const fb = ctx.createGain(); fb.gain.value = echo;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2500;
+    out.connect(dl); dl.connect(lp).connect(fb).connect(dl); lp.connect(outBus);
+  }
+  partials.forEach(([f, v], i) => {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(f * 1.012, t); o.frequency.exponentialRampToValueAtTime(f, t + .08);
+    g.gain.setValueAtTime(.0001, t);
+    g.gain.exponentialRampToValueAtTime(v, t + .003);
+    g.gain.exponentialRampToValueAtTime(.0001, t + dur * (1 - i * .12));
+    o.connect(g).connect(out); o.start(t); o.stop(t + dur + .05);
+  });
+}
+// ヒット：「カキーン」…鋭いアタック＋高く澄んだ響き
+function sndHit(){
+  const t = ctx.currentTime;
+  noise(t, .025, {f0:5000, f1:2500, q:.5, v0:1});            // カッ
+  tone(t, 900, .04, .35, 'square');
+  ring(t + .01, [[1850,.32],[2780,.22],[3960,.16],[5300,.08]], .55, .18);  // キーン
+}
+// ホームラン：「カァァァン！」…強いアタック＋太くて長い響きと反響
+function sndHomer(){
+  const t = ctx.currentTime;
+  noise(t, .04, {f0:4500, f1:1500, q:.4, v0:1.3});
+  tone(t, 420, .08, .5, 'square');
+  ring(t + .01, [[980,.42],[1470,.34],[2210,.28],[3050,.18],[4400,.1]], 1.7, .42);
+}
+// ファウル・凡打：「コン」…詰まった鈍い音
+function sndDull(){
+  const t = ctx.currentTime;
+  noise(t, .06, {f0:1400, f1:500, q:.8, v0:.8, type:'lowpass'});
+  tone(t, 520, .12, .35, 'triangle');
+  ring(t, [[1300,.1],[2100,.05]], .15);
+}
+function sndCrack(k){
+  const t = ctx.currentTime;
+  noise(t, .1, {f0:800 + 3500*k, f1:1200, q:.6, v0:.1 + .9*k});
+  tone(t, 400 + 1800*k, .05, .3, 'square');
+  tone(t, 900, .18, .05 + .15*k, 'triangle');
+}
+// 空振り：「ブン」…低い風切り音が膨らんでしぼむ
+function sndWhiff(){
+  const t = ctx.currentTime, dur = .32;
+  const s = ctx.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+  const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 2.2;
+  f.frequency.setValueAtTime(160, t); f.frequency.exponentialRampToValueAtTime(520, t + dur * .45); f.frequency.exponentialRampToValueAtTime(180, t + dur);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(1.6, t + dur * .45); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  s.connect(f).connect(g).connect(outBus); s.start(t); s.stop(t + dur + .02);
+  const o = ctx.createOscillator(), og = ctx.createGain(); o.type = 'sine';
+  o.frequency.setValueAtTime(70, t); o.frequency.exponentialRampToValueAtTime(110, t + dur * .45); o.frequency.exponentialRampToValueAtTime(60, t + dur);
+  og.gain.setValueAtTime(.0001, t); og.gain.exponentialRampToValueAtTime(.45, t + dur * .45); og.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(og).connect(outBus); o.start(t); o.stop(t + dur + .02);
+}
+const sndCheer = () => noise(ctx.currentTime + .3, 2.2, {f0:600, f1:1500, q:.4, v0:.35, v1:.001});
+
+/* ---------- 音声（審判と実況） ---------- */
+let jaVoices = [], maleVoice = null, anyJaVoice = null;
+const MALE_RE = /otoya|hattori|ichiro|keita|daichi|naoki|takumi|kenji|男性|\bmale\b|x-jac|x-jad|standard-c|standard-d|wavenet-c|wavenet-d|neural2-c|neural2-d/i;
+function loadVoices(){
+  if(!('speechSynthesis' in window)) return;
+  jaVoices = speechSynthesis.getVoices().filter(v => /^ja/i.test(v.lang));
+  const q = v => (/premium|enhanced|拡張|高品質/i.test(v.name) ? 0 : 1);   // 高音質版を優先
+  const males = jaVoices.filter(v => MALE_RE.test(v.name)).sort((a, b) => q(a) - q(b));
+  maleVoice = males[0] || null;
+  anyJaVoice = jaVoices.sort((a, b) => q(a) - q(b))[0] || null;
+}
+if('speechSynthesis' in window){ loadVoices(); speechSynthesis.addEventListener && speechSynthesis.addEventListener('voiceschanged', loadVoices); }
+
+// 男性の声があればそれを使い、なければ女性の声を低くして男性寄りにする
+const VOICE_PROFILES = {
+  ump: { male:{pitch:1.35, rate:1.05}, fallback:{pitch:.85, rate:1.05} },   // 審判：高く通る声
+  ann: { male:{pitch:.92,  rate:1.28}, fallback:{pitch:.6,  rate:1.22} },   // 実況：低めで勢いのある声
+};
+function speak(role, text){
+  if(!('speechSynthesis' in window) || !text) return;
+  try{
+    if(!jaVoices.length) loadVoices();
+    text = text.replace(/内野安打/g, 'ないやあんだ');   // 読み間違い対策
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ja-JP';
+    const v = maleVoice || anyJaVoice;
+    if(v) u.voice = v;
+    const pr = VOICE_PROFILES[role][maleVoice ? 'male' : 'fallback'];
+    u.pitch = pr.pitch; u.rate = pr.rate; u.volume = 1;
+    // iPhoneでは、読み上げ中に止めてすぐ次を読ませると、以降ずっと無音になることがある。
+    // 読み上げ中のときだけ止めて、少し間を置いてから次を読む
+    const busy = speechSynthesis.speaking || speechSynthesis.pending;
+    if(busy) speechSynthesis.cancel();
+    if(speechSynthesis.paused) speechSynthesis.resume();
+    if(busy) setTimeout(() => { try{ speechSynthesis.speak(u); }catch(e){} }, 60);
+    else speechSynthesis.speak(u);
+  }catch(e){}
+}
+// 審判のコール
+const UMP = {
+  'ストライク':'ストライーク！', 'ボール':'ボール！', 'ファウル':'ファウルボール！',
+  '見逃し三振':'ストライーク！ バッターアウト！', 'フォアボール':'ボール、フォア！',
+  'プレイボール':'プレイボール！', 'ゲームセット':'ゲームセット！',
+};
+// 実況のセリフ
+const ANN = {
+  'ホームラン':'打ったー！ 入った、ホームラン！', 'ツーベース':'打ったー！ ツーベース！', 'スリーベース':'打ったー！ スリーベース！',
+  'ヒット':'打った、ヒット！', '内野安打':'内野安打！', '外野フライ':'打ち上げた、外野フライ', '内野ゴロ':'内野ゴロ', 'ライナー':'ライナー、アウト',
+  '空振り':'空振り！', '空振り三振':'空振り三振！',
+};
+function call(key){
+  if(UMP[key]) return speak('ump', UMP[key]);
+  if(ANN[key]) return speak('ann', ANN[key]);
+  if(key) speak('ann', key);
+}
+function voiceLabel(){ return maleVoice ? maleVoice.name : anyJaVoice ? anyJaVoice.name + '（男性の声が見つからないため低めに調整）' : '音声なし'; }
+
+// 音の出力先を振り分け
+var sndCurveW, sndSliderW, sndSetW, sndReleaseW, sndWhooshW, sndArriveW, sndHitW, sndHomerW, sndDullW, sndWhiffW;
+{
+  const wrap = (getBus, fn) => (...a) => { const prev = outBus; outBus = getBus(); try{ return fn(...a); } finally { outBus = prev; } };
+  const ball = () => ballBus, hit = () => hitBus;
+  sndSetW = wrap(ball, sndSet); sndReleaseW = wrap(ball, sndRelease); sndWhooshW = wrap(ball, sndWhoosh); sndCurveW = wrap(ball, sndWhooshCurve); sndSliderW = wrap(ball, sndWhooshSlider); sndArriveW = wrap(ball, sndArrive);
+  sndHitW = wrap(hit, sndHit); sndHomerW = wrap(hit, sndHomer); sndDullW = wrap(hit, sndDull); sndWhiffW = wrap(hit, sndWhiff);
+}
+
+/* ---------- sensor ---------- */
+function onMotion(e){
+  const r = e.rotationRate; if(!r) return;
+  const a = r.alpha||0, b = r.beta||0, g = r.gamma||0;
+  if(a===0 && b===0 && g===0 && !gotMotion) return;
+  gotMotion = true;
+  const m = Math.hypot(a, b, g); curMag = m;
+  const t = performance.now();
+  const th = phase === 'calib' ? 250 : threshold;
+  if(m > th){
+    if(!above){ above = true; peak = 0; }
+    if(m > peak){ peak = m; peakT = t; peakVec = [a, b, g]; }
+  } else if(above){
+    above = false; onSwing(peakT, peak, peakVec);
+  }
+}
+function onSwing(t, pk, vec){
+  if(phase === 'set' && pk < refPeak * .55) return;   // 振りかぶりの小さな動きは投球とみなさない
+  if(t - lastSwingAt < 700) return;
+  lastSwingAt = t;
+  if(phase === 'calib') return calibSwing(pk, vec);
+  if(phase === 'pitch') judgeSwing(t, pk);
+  if(phase === 'set') doThrow(pk, vec);
+}
+const inFrame = (() => { try{ return window.self !== window.top; }catch(e){ return true; } })();
+function startSensor(){
+  // iOSでは、ボタンを押した直後に何よりも先に許可を求める必要がある
+  let permPromise = Promise.resolve('not-needed');
+  if(typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function'){
+    try{ permPromise = DeviceMotionEvent.requestPermission(); }
+    catch(e){ permPromise = Promise.resolve('error: ' + (e && e.message || e)); }
+  }
+  // 結果を待たずに受信を始める（「拒否」と返っても実際には値が届く環境がある）
+  if(!listening){ window.addEventListener('devicemotion', onMotion); listening = true; }
+  initAudio();
+  mode = 'sensor';
+  enterCalib();
+  $('calibInfo').textContent = 'センサーを確認しています…';
+  let permResult = '';
+  permPromise.then(r => { permResult = String(r); }, e => { permResult = 'error: ' + (e && (e.name || e.message) || e); });
+  const started = performance.now();
+  (function check(){
+    if(gotMotion){ if(!calibPeaks.length) $('calibInfo').textContent = 'センサーOK。素振りしてください。'; return; }
+    if(performance.now() - started < 2500) return setTimeout(check, 150);
+    sensorFail(permResult);
+  })();
+}
+function sensorFail(permResult){
+  let text;
+  if(inFrame){
+    text = 'claude.aiのページ内に埋め込まれて表示されているため、ブラウザがセンサーの利用をブロックしています。このHTMLファイルを自分のサイト（GitHub Pagesなど、https://で始まるURL）に置いて開くとセンサーで遊べます。ここでは「画面タップで遊ぶ」を使ってください。';
+  } else if(/denied/.test(permResult)){
+    text = 'センサーの利用が拒否された状態になっています。iPhoneの場合は、このタブを閉じてから開き直し、許可ダイアログで「許可」を選んでください。それでも出る場合は、設定アプリ →「Safari」→「詳細」→「Webサイトデータ」でこのサイトのデータを削除すると、もう一度許可を求められます。';
+  } else {
+    text = 'この端末ではモーションセンサーの値が取れませんでした。';
+  }
+  $('sensorErr').textContent = text; $('sensorErr').hidden = false;
+  $('sensorDiag').textContent = `診断: 埋め込み表示=${inFrame ? 'はい' : 'いいえ'} ／ 許可結果=${permResult || '応答なし'} ／ HTTPS=${location.protocol === 'https:' ? 'はい' : 'いいえ'}`;
+  $('sensorDiag').hidden = false;
+  $('btnOpen').hidden = true;
+  $('btnTap2').hidden = false; $('btnSkip').hidden = true; $('btnBat').hidden = true;
+  $('calibInfo').textContent = '';
+}
+function openStandalone(){
+  const w = window.open(location.href, '_blank');
+  if(!w) $('sensorErr').textContent = '別の画面を開けませんでした。共有メニューから「Safariで開く」「ブラウザで開く」を選んでください。';
+}
+
+/* ---------- screens ---------- */
+function showOnly(id){
+  ['title','intro','lobby','calib','play','pplay','over'].forEach(s => $(s).hidden = s !== id);
+  $('board').hidden = id === 'title' || id === 'intro' || id === 'lobby';
+  $('controls').hidden = !(id === 'play' || id === 'pplay');
+}
+function enterCalib(){
+  phase = 'calib'; calibPeaks = []; calibVecs = [];
+  const P = gameMode === 'pitch';
+  $('calibTitle').textContent = P ? '投球練習を3回' : '素振りを3回';
+  $('calibDesc').textContent = P
+    ? 'いつものフォームで、スマホを離さずに投げる動きを3回してください。腕の振りの速さとフォームを覚えて、球速と制球の基準にします。'
+    : 'いつもの強さで3回振ってください。振りの速さに合わせて感度を調整します。';
+  $('btnBat').textContent = P ? 'マウンドに上がる' : '打席に入る';
+  $('btnSkip').textContent = P ? '調整せずにマウンドに上がる' : '調整せずに打席に入る';
+  showOnly('calib');
+  document.querySelectorAll('.dots i').forEach(d => d.classList.remove('done'));
+  $('calibInfo').textContent = ''; $('btnBat').hidden = true; $('btnSkip').hidden = false;
+  $('sensorErr').hidden = true; $('btnTap2').hidden = true;
+  $('sensorDiag').hidden = true; $('btnOpen').hidden = true;
+}
+function calibSwing(pk, vec){
+  if(calibPeaks.length >= 3) return;
+  calibPeaks.push(pk); if(vec) calibVecs.push(vec);
+  document.querySelectorAll('.dots i')[calibPeaks.length-1].classList.add('done');
+  $('calibInfo').textContent = `${calibPeaks.length}回目：${Math.round(pk).toLocaleString()}°/s`;
+  if(calibPeaks.length === 3){
+    refPeak = calibPeaks.reduce((a,b)=>a+b,0) / 3;
+    threshold = clamp(refPeak * .45, 250, 700);
+    if(gameMode === 'pitch'){
+      threshold = clamp(refPeak * .4, 250, 700);
+      throwAxis = calibVecs.length === 3 ? normv(calibVecs.map(normv).reduce((a, v) => [a[0]+v[0], a[1]+v[1], a[2]+v[2]], [0,0,0])) : null;
+      $('calibInfo').textContent = `平均の腕の振り ${Math.round(refPeak).toLocaleString()}°/s。このフォームを基準に球速とコースのズレを計算します。`;
+    } else
+    $('calibInfo').textContent = `平均スイング速度 ${Math.round(refPeak).toLocaleString()}°/s。これを基準に飛距離を計算します。`;
+    $('btnBat').hidden = false; $('btnSkip').hidden = true;
+  }
+}
+async function startGame(){
+  initAudio();
+  if(gameMode === 'pitch') return startPitchGame();
+  setBoardMode('bat');
+  $('btnPause').hidden = false; $('btnRecal').textContent = '素振りし直す'; $('meterName').textContent = 'スイング速度';
+  call('プレイボール');
+  try{ if(navigator.wakeLock) wakeLock = await navigator.wakeLock.request('screen'); }catch(e){}
+  game = {strikes:0, outs:0, pa:0, hits:0, hr:0};
+  paused = false; $('btnPause').textContent = '一時停止';
+  renderBoard(); showOnly('play');
+  $('tapHint').hidden = mode !== 'tap';
+  $('meterBox').hidden = mode !== 'sensor';
+  $('btnRecal').hidden = mode !== 'sensor';
+  $('meterTh').style.left = (threshold / METER_MAX * 100) + '%';
+  setMsg('', ''); $('detail').textContent = '最初の投球を待っています';
+  phase = 'wait'; showPitchView();
+  scheduleNext(1600);
+}
+function renderBoard(){
+  const g = game || {strikes:0,outs:0,pa:0,hits:0,hr:0};
+  document.querySelectorAll('.lamp.s').forEach((l,i) => l.classList.toggle('on', i < g.strikes));
+  document.querySelectorAll('.lamp.o').forEach((l,i) => l.classList.toggle('on', i < g.outs));
+  $('stPa').textContent = g.pa; $('stHit').textContent = g.hits; $('stHr').textContent = g.hr;
+}
+function setMsg(text, cls){ const m = $('msg'); m.textContent = text; m.className = 'msg display ' + (cls||''); }
+function showPitchView(){ $('pitchView').hidden = false; $('fieldView').hidden = true; }
+function showField(angleDeg, dist){
+  $('pitchView').hidden = true; $('fieldView').hidden = false;
+  const r = angleDeg * Math.PI / 180;
+  const x = -Math.sin(r) * dist, y = -Math.cos(r) * dist;
+  $('dot').setAttribute('cx', x); $('dot').setAttribute('cy', y);
+  $('traj').setAttribute('x2', x); $('traj').setAttribute('y2', y);
+}
+
+/* ---------- pitching ---------- */
+// snd: 接近音の種類（st=ストレート音 / cv=カーブ音 / sl=スライダー音）、dx: 画面上の曲がり（+は右）
+const PITCHERS = [
+  {id:'power', name:'本格派', top:'MAX 157km/h', desc:'剛速球とカーブ、同じ音で来る遅いチェンジアップ',
+   pitches:[
+    {name:'ストレート',     kmh:[152,157], snd:'st', w:.55, dx:0},
+    {name:'カーブ',         kmh:[115,122], snd:'cv', w:.25, dx:-.35},
+    {name:'チェンジアップ', kmh:[127,133], snd:'st', w:.20, dx:.05},
+  ]},
+  {id:'finesse', name:'技巧派', top:'MAX 143km/h', desc:'直球にスライダーとカーブを散らしてくる',
+   pitches:[
+    {name:'ストレート',     kmh:[138,143], snd:'st', w:.40, dx:0},
+    {name:'スライダー',     kmh:[124,130], snd:'sl', w:.30, dx:-.3},
+    {name:'カーブ',         kmh:[106,113], snd:'cv', w:.15, dx:-.35},
+    {name:'チェンジアップ', kmh:[117,123], snd:'st', w:.15, dx:.05},
+  ]},
+  {id:'heat', name:'速球派', top:'MAX 162km/h', desc:'160km/h級の直球と、同じ音で来るフォーク',
+   pitches:[
+    {name:'ストレート', kmh:[156,162], snd:'st', w:.62, dx:0},
+    {name:'フォーク',   kmh:[139,146], snd:'st', w:.38, dx:0},
+  ]},
+  {id:'junk', name:'軟投派', top:'MAX 130km/h', desc:'遅い球の緩急でタイミングを外してくる',
+   pitches:[
+    {name:'ストレート',     kmh:[125,130], snd:'st', w:.35, dx:0},
+    {name:'カーブ',         kmh:[100,106], snd:'cv', w:.25, dx:-.35},
+    {name:'スローカーブ',   kmh:[80,88],   snd:'cv', w:.20, dx:-.45},
+    {name:'チェンジアップ', kmh:[107,113], snd:'st', w:.20, dx:.05},
+  ]},
+];
+let opp = PITCHERS[0];
+function pickPitch(){
+  let r = Math.random();
+  for(const p of opp.pitches){ if((r -= p.w) <= 0) return p; }
+  return opp.pitches[0];
+}
+// 実際の到達時間を1.6倍に引き延ばしたもの（155km/h→約0.69秒、100km/h→約1.06秒）
+const travelFor = kmh => 18.44 / (kmh / 3.6) * 1.6;
+(function buildPitcherUI(){
+  PITCHERS.forEach(pc => {
+    const b = document.createElement('button');
+    b.className = 'pcard'; b.setAttribute('aria-pressed', pc === opp);
+    b.innerHTML = `<span class="pc-name"></span><span class="pc-top"></span><span class="pc-list"></span>`;
+    b.querySelector('.pc-name').textContent = pc.name;
+    b.querySelector('.pc-top').textContent = pc.top;
+    b.querySelector('.pc-list').textContent = pc.pitches.map(x => x.name).join('・');
+    b.title = pc.desc;
+    b.addEventListener('click', () => {
+      opp = pc;
+      document.querySelectorAll('.pcard').forEach(x => x.setAttribute('aria-pressed', x === b));
+    });
+    $('pitchers').appendChild(b);
+  });
+})();
+function scheduleNext(ms){ clearTimeout(nextTimer); nextTimer = setTimeout(throwPitch, ms); }
+function throwPitch(given){
+  if(!given && (paused || phase !== 'wait')) return;
+  if(ctx.state !== 'running') ctx.resume().catch(() => {});
+  const p = given || pickPitch();
+  const now = ctx.currentTime;
+  const tSet = now + .1;
+  const tRel = tSet + .9 + Math.random() * .8;
+  const kmh = given ? given.kmh : Math.round(p.kmh[0] + Math.random() * (p.kmh[1] - p.kmh[0]));
+  const tArr = tRel + travelFor(kmh);
+  sndSetW(tSet); sndReleaseW(tRel);
+  (p.snd === 'cv' ? sndCurveW : p.snd === 'sl' ? sndSliderW : sndWhooshW)(tRel, tArr);
+  const mitt = sndArriveW(tArr).concat(sndMitt(tArr + .02));
+  const lat = ((ctx.outputLatency || 0) + (ctx.baseLatency || 0)) * 1000;
+  const perfNow = performance.now();
+  const toPerf = a => perfNow + (a - now) * 1000 + lat;
+  pitch = {p, kmh, rel:toPerf(tRel), arr:toPerf(tArr), mitt, done:false, online: given || null};
+  // スイングの検出は振り終わり（速度が下がった時点）なので、到達後しばらく待ってから見逃しを確定する
+  const settle = () => {
+    if(!pitch || pitch.done) return;
+    if(above) return (pitch.timeout = setTimeout(settle, 60));   // まだ振っている途中
+    takePitch();
+  };
+  pitch.timeout = setTimeout(settle, pitch.arr - performance.now() + 420);
+  phase = 'pitch'; showPitchView();
+  setMsg('', ''); $('detail').textContent = given ? '相手ピッチャー、構えて…' : `${opp.name}ピッチャー、構えて…`;
+}
+function timingText(d){
+  if(Math.abs(d) < 8) return 'タイミング ジャスト';
+  return `タイミング ${Math.round(Math.abs(d))}ms ${d < 0 ? '早い' : '遅い'}`;
+}
+function speedText(pk){ return mode === 'sensor' ? ` ／ スイング ${Math.round(pk).toLocaleString()}°/s` : ''; }
+
+function judgeSwing(t, pk){
+  if(!pitch || pitch.done || t < pitch.rel) return;
+  const d = t - pitch.arr;
+  if(d > 300) return;   // 大きく遅れた振りは見逃し扱い
+  pitch.done = true; clearTimeout(pitch.timeout);
+  if(d < -110 || d > 110){
+    sndWhiffW();
+    if(online) return reportBat({kind:'whiff', bdetail:`${timingText(d)}${speedText(pk)}`});
+    return strike('空振り', `${pitchInfo()} ／ ${timingText(d)}${speedText(pk)}`);
+  }
+  if(t < pitch.arr) pitch.mitt.forEach(n => { try{ n.stop(); }catch(e){} });
+  contact(d, pk);
+}
+function takePitch(){
+  pitch.done = true;
+  if(online) return reportBat({kind:'take'});
+  strike('見逃し', `${pitchInfo()}を見逃し`);
+}
+const pitchInfo = () => pitch ? `${pitch.p.name} ${pitch.kmh}km/h` : '';
+function strike(label, detail){
+  game.strikes++;
+  if(game.strikes >= 3){
+    const text = label === '見逃し' ? '見逃し三振' : '空振り三振';
+    call(text);
+    return endAtBat(text, 'bad', detail, true, false);
+  }
+  call(label === '空振り' ? '空振り' : 'ストライク');
+  renderBoard(); setMsg(label, 'bad'); $('detail').textContent = detail;
+  phase = 'wait'; scheduleNext(2400);
+}
+// ---- 打球の判定 ----
+// タイミング：芯±25ms／良い±50ms／弱い±75ms（ここまで前に飛ぶ）／±110msまでファウル
+const pickW = table => { let r = Math.random(); for(const [k, w] of table){ if((r -= w) <= 0) return k; } return table[0][0]; };
+function fielder(angle, outfield){
+  if(outfield) return angle > 15 ? 'レフト' : angle < -15 ? 'ライト' : 'センター';
+  return angle > 22 ? 'サード' : angle > 5 ? 'ショート' : angle > -5 ? 'ピッチャー' : angle > -22 ? 'セカンド' : 'ファースト';
+}
+function contact(d, pk){
+  const q = Math.abs(d);
+  const pr = mode === 'sensor' ? clamp(pk / refPeak, .5, 1.35) : .95 + Math.random() * .2;   // 1.0 = 平均の振りの速さ
+  const angle = -d / 75 * 42 + (Math.random() - .5) * 10;   // +は引っ張り（レフト方向）
+  const detailBase = `${pitchInfo()} ／ ${timingText(d)}${speedText(pk)}`;
+  const outZ = !!(online && pitch && pitch.online && !pitch.online.inZone);   // ボール球は打ちにくい
+  if(q > 75 || Math.abs(angle) > 45 || (outZ && Math.random() < .35)){
+    sndHitW();
+    const fa = Math.sign(angle || -d) * (48 + Math.random() * 10);
+    showField(fa, 25 + Math.random() * 45);
+    if(online) return reportBat({kind:'foul', bdetail:`${timingText(d)}${speedText(pk)}`});
+    if(game.strikes < 2) game.strikes++;
+    call('ファウル'); renderBoard(); setMsg('ファウル', 'bad');
+    $('detail').textContent = detailBase;
+    phase = 'wait'; return scheduleNext(2600);
+  }
+  const quality = q <= 25 ? 'perfect' : q <= 50 ? 'good' : 'weak';
+  // 打球の種類：芯を外すほどゴロとポップフライが増える
+  const type = pickW({
+    perfect:[['liner',.45], ['fly',.40], ['grounder',.12], ['pop',.03]],
+    good:   [['liner',.30], ['fly',.30], ['grounder',.30], ['pop',.10]],
+    weak:   [['liner',.10], ['fly',.15], ['grounder',.50], ['pop',.25]],
+  }[quality]);
+  const qd = {perfect:1, good:.85, weak:.68}[quality];
+  const speedAdj = .88 + clamp((pitch ? pitch.kmh : 140) - 100, 0, 60) / 500;   // 速い球ほど飛ぶ
+  const powerF = .75 + .25 * pr;                                                 // 速く振るほど飛ぶ
+  const rnd = .92 + Math.random() * .16;
+  let dist;
+  if(type === 'fly') dist = 125 * qd * powerF * speedAdj * rnd * (outZ ? .8 : 1);
+  else if(type === 'liner') dist = 75 * qd * powerF * rnd;
+  else if(type === 'grounder') dist = 28 + Math.random() * 18;
+  else dist = 22 + Math.random() * 20;
+  // ホームランは「芯」＋「平均より5%以上速い振り」＋「フライ」のときだけ
+  // さらに打球の角度が理想的なとき（振りが速いほど出やすい）
+  const canHR = type === 'fly' && quality === 'perfect' && pr >= 1.05 && !outZ && Math.random() < .4 + (pr - 1.05) * 1.5;
+  if(type === 'fly' && !canHR) dist = Math.min(dist, 117);
+  const outfield = type === 'fly' || (type === 'liner' && dist >= 50);
+  const pos = fielder(angle, outfield);
+  let res, hit = false, hr = false, say, snd;
+  if(type === 'fly' && canHR && dist >= 118){
+    res = 'ホームラン'; hit = true; hr = true; say = '打ったー！ 入った、ホームラン！'; snd = 'homer';
+  } else if(type === 'liner'){
+    snd = 'hit';
+    const pHit = {perfect:.74, good:.64, weak:.46}[quality];
+    if(Math.random() < pHit){
+      hit = true;
+      res = quality === 'perfect' && Math.random() < .3 ? 'ツーベース' : 'ヒット';
+      say = res === 'ツーベース' ? '打ったー！ 鋭い当たり、ツーベース！' : `打った、${pos}前ヒット！`;
+    } else {
+      res = `${pos}ライナー`;
+      say = quality === 'perfect' ? `いい当たり！ しかし${pos}の正面` : `${pos}ライナー、アウト`;
+    }
+  } else if(type === 'fly'){
+    snd = 'hit';
+    const pHit = dist >= 105 ? .42 : dist >= 80 ? .23 : .11;
+    if(Math.random() < pHit){
+      hit = true;
+      res = dist >= 105 ? (Math.random() < .12 ? 'スリーベース' : 'ツーベース') : 'ヒット';
+      say = res === 'ヒット' ? `落ちた！ ${pos}前ヒット！` : `打ったー！ ${pos}の頭を越えた、${res}！`;
+    } else {
+      res = `${pos}フライ`;
+      say = dist >= 105 ? `大きい！ …しかし${pos}が捕った` : `打ち上げた、${pos}フライ`;
+    }
+  } else if(type === 'grounder'){
+    const pHit = {perfect:.35, good:.30, weak:.23}[quality];
+    if(Math.random() < pHit){
+      hit = true; snd = 'hit';
+      if(quality === 'weak' || Math.random() < .3){ res = '内野安打'; say = '内野安打！'; }
+      else { res = 'ヒット'; say = `ゴロで${fielder(angle, true)}前に抜けた、ヒット！`; }
+    } else { res = `${pos}ゴロ`; say = `${pos}ゴロ`; snd = 'hit'; }
+  } else {
+    snd = 'hit';
+    if(Math.random() < .05){ hit = true; res = 'ヒット'; say = 'ポテンヒット！'; }
+    else { const ip = fielder(angle, false); res = `${ip}フライ`; say = `打ち上げた、${ip}フライ`; }
+  }
+  showField(angle, Math.min(dist, 128));
+  const typeName = {liner:'ライナー', fly:'フライ', grounder:'ゴロ', pop:'ポップフライ'}[type];
+  const dir = angle > 15 ? 'レフト方向' : angle < -15 ? 'ライト方向' : 'センター方向';
+  const detail = `${detailBase}\n${dir}への${typeName} ／ ${Math.round(dist)}m`;
+  if(snd === 'homer'){ sndHomerW(); sndCheer(); } else if(snd === 'hit') sndHitW(); else sndDullW();
+  if(online) return reportBat({kind:'inplay', outcome:res, say, snd, bdetail:`${timingText(d)} ／ ${dir}への${typeName} ／ ${Math.round(dist)}m`});
+  speak('ann', say);
+  endAtBat(res, hr ? 'big' : hit ? 'good' : 'bad', detail, !hit, hit, hr);
+}
+function endAtBat(res, cls, detail, isOut, isHit, isHr=false){
+  game.pa++; game.strikes = 0;
+  if(isOut) game.outs++;
+  if(isHit) game.hits++;
+  if(isHr) game.hr++;
+  renderBoard(); setMsg(res, cls);
+  $('detail').style.whiteSpace = 'pre-line'; $('detail').textContent = detail;
+  if(game.outs >= 3){
+    phase = 'over';
+    clearTimeout(nextTimer);
+    nextTimer = setTimeout(gameOver, 3200);
+    return;
+  }
+  phase = 'wait'; scheduleNext(isHr ? 4200 : 3400);
+}
+function gameOver(){
+  call('ゲームセット');
+  const avg = game.pa ? (game.hits / game.pa).toFixed(3).replace(/^0/, '') : '.000';
+  $('overStats').textContent = `${game.pa}打席 ${game.hits}安打（打率${avg}）、ホームラン${game.hr}本`;
+  showOnly('over');
+  try{ wakeLock && wakeLock.release(); }catch(e){}
+}
+
+/* ---------- animation ---------- */
+function frame(){
+  requestAnimationFrame(frame);
+  if(mode === 'sensor' && !$('controls').hidden){
+    const v = mode === 'sensor' ? curMag : 0;
+    $('meter').style.width = clamp(v / METER_MAX * 100, 0, 100) + '%';
+    $('meterVal').textContent = Math.round(v).toLocaleString() + '°/s';
+    curMag *= .9;
+  }
+  if(phase === 'flight' && throwAnim) animThrow();
+  const ball = $('ball');
+  if(phase === 'pitch' && pitch){
+    const now = performance.now();
+    if(now < pitch.rel || now > pitch.arr + 60){ ball.style.opacity = 0; return; }
+    const s = clamp((now - pitch.rel) / (pitch.arr - pitch.rel), 0, 1);
+    ball.style.opacity = 1;
+    ball.style.top = (14 + 58 * s * s) + '%';
+    ball.style.left = (50 + (pitch.p.dx || 0) * 100 * Math.pow(s, 2.5) * .5) + '%';
+    ball.style.transform = `translate(-50%,-50%) scale(${.1 + .9 * s * s})`;
+  } else ball.style.opacity = 0;
+}
+requestAnimationFrame(frame);
+
+
+/* ================= 投げるモード ================= */
+let gameMode = 'bat', calibVecs = [], throwAxis = null, throwAnim = null, prevKmh = null, pg = null, pTimer = null;
+const normv = v => { const m = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0]/m, v[1]/m, v[2]/m]; };
+const dotv = (a, b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+const crossv = (a, b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+const gauss = () => { let u = 0, v = 0; while(!u) u = Math.random(); while(!v) v = Math.random(); return Math.sqrt(-2*Math.log(u)) * Math.cos(2*Math.PI*v); };
+
+// 右投手・捕手目線。brk=変化量（px, +xは外角方向, +yは下）、mul=球速倍率、ctrl=制球の難しさ、move=打ちにくさ
+const PTYPES = [
+  {id:'st', name:'ストレート',     mul:1.00, ctrl:1.00, brk:[0,-6],  move:.00, chase:false},
+  {id:'sl', name:'スライダー',     mul:.90,  ctrl:1.15, brk:[38,8],  move:.10, chase:false},
+  {id:'cv', name:'カーブ',         mul:.80,  ctrl:1.30, brk:[26,55], move:.12, chase:true},
+  {id:'fk', name:'フォーク',       mul:.90,  ctrl:1.35, brk:[0,48],  move:.15, chase:true},
+  {id:'ch', name:'チェンジアップ', mul:.84,  ctrl:1.10, brk:[-14,30],move:.08, chase:true},
+];
+let pType = PTYPES[0];
+const CX = [-40, 0, 40], CY = [-50, 0, 50];
+let aim = {x:0, y:0};
+
+function courseName(x, y){
+  const v = y < -25 ? '高め' : y > 25 ? '低め' : '';
+  const h = x < -20 ? '内角' : x > 20 ? '外角' : '';
+  if(!h && !v) return 'ど真ん中';
+  return h ? h + v : '真ん中' + v;
+}
+function setGameMode(m){
+  gameMode = m;
+  $('modeBat').setAttribute('aria-pressed', m === 'bat');
+  $('modePitch').setAttribute('aria-pressed', m === 'pitch');
+  $('introBat').hidden = m !== 'bat';
+  $('introPitch').hidden = m !== 'pitch';
+  $('btnTap').textContent = m === 'pitch' ? 'ボタンで投げる（センサーなし）' : '画面タップで遊ぶ';
+  $('btnTap2').textContent = $('btnTap').textContent;
+  setBoardMode(m);
+}
+function setBoardMode(m){
+  $('bRow').hidden = m !== 'pitch';
+  $('stL1').textContent = m === 'pitch' ? '打者' : '打席';
+  $('stL2').textContent = m === 'pitch' ? '奪三振' : '安打';
+  $('stL3').textContent = m === 'pitch' ? '失点' : '本塁打';
+  if(m === 'pitch') renderPBoard(); else renderBoard();
+}
+function renderPBoard(){
+  const g = pg || {balls:0, strikes:0, outs:0, batters:0, k:0, runs:0};
+  document.querySelectorAll('.lamp.b').forEach((l,i) => l.classList.toggle('on', i < g.balls));
+  document.querySelectorAll('.lamp.s').forEach((l,i) => l.classList.toggle('on', i < g.strikes));
+  document.querySelectorAll('.lamp.o').forEach((l,i) => l.classList.toggle('on', i < g.outs));
+  $('stPa').textContent = g.batters; $('stHit').textContent = g.k; $('stHr').textContent = g.runs;
+}
+function setPMsg(text, cls){ const m = $('pmsg'); m.textContent = text; m.className = 'msg display ' + (cls||''); }
+
+// 球種ボタンとコースのマス
+(function buildPitchUI(){
+  PTYPES.forEach(pt => {
+    const b = document.createElement('button');
+    b.textContent = pt.name; b.setAttribute('aria-pressed', pt === pType);
+    b.addEventListener('click', () => {
+      if(phase !== 'aim') return;
+      pType = pt;
+      document.querySelectorAll('#ptypes button').forEach(x => x.setAttribute('aria-pressed', x === b));
+      aimHint();
+    });
+    $('ptypes').appendChild(b);
+  });
+  const NS = 'http://www.w3.org/2000/svg';
+  CY.forEach(y => CX.forEach(x => {
+    const r = document.createElementNS(NS, 'rect');
+    r.setAttribute('x', x - 20); r.setAttribute('y', y - 25); r.setAttribute('width', 40); r.setAttribute('height', 50);
+    r.setAttribute('class', 'cell');
+    r.addEventListener('click', () => { if(phase !== 'aim') return; aim = {x, y}; placeAim(); aimHint(); });
+    $('cells').appendChild(r);
+  }));
+})();
+function placeAim(){ $('aimMark').setAttribute('transform', `translate(${aim.x} ${aim.y})`); }
+function aimHint(){
+  $('pdetail').textContent = `${pType.name}で${courseName(aim.x, aim.y)}を狙う\n${mode === 'tap' ? '「投げる」を押すと投球します' : '「セット」を押して構え、腕を振って投げてください'}`;
+}
+function setPitchControls(){
+  const aiming = phase === 'aim';
+  document.querySelectorAll('#ptypes button').forEach(b => b.disabled = !aiming);
+  document.querySelectorAll('.cell').forEach(c => c.classList.toggle('off', !aiming));
+  const btn = $('btnSet');
+  btn.hidden = !(phase === 'aim' || phase === 'set');
+  btn.textContent = phase === 'set' ? 'キャンセル' : (mode === 'tap' ? '投げる' : 'セット');
+  btn.className = phase === 'set' ? 'ghost' : 'primary';
+}
+function clearMarks(){ $('marks').innerHTML = ''; }
+function addMark(x, y, n, color){
+  const NS = 'http://www.w3.org/2000/svg';
+  const c = document.createElementNS(NS, 'circle');
+  c.setAttribute('cx', x); c.setAttribute('cy', y); c.setAttribute('r', 8); c.setAttribute('fill', color); c.setAttribute('opacity', '.9');
+  const t = document.createElementNS(NS, 'text');
+  t.setAttribute('x', x); t.setAttribute('y', y + 3.5); t.setAttribute('text-anchor', 'middle'); t.setAttribute('font-size', 10);
+  t.setAttribute('font-weight', 700); t.setAttribute('fill', '#15301f'); t.textContent = n;
+  $('marks').append(c, t);
+}
+
+async function startPitchGame(){
+  call('プレイボール');
+  try{ if(navigator.wakeLock) wakeLock = await navigator.wakeLock.request('screen'); }catch(e){}
+  pg = {balls:0, strikes:0, outs:0, batters:0, k:0, hits:0, bb:0, runs:0, hr:0, bases:[false,false,false], pitchNo:0};
+  prevKmh = null; throwAnim = null;
+  setBoardMode('pitch');
+  showOnly('pplay');
+  $('btnPause').hidden = true;
+  $('btnRecal').hidden = mode !== 'sensor'; $('btnRecal').textContent = '投球練習し直す';
+  $('meterBox').hidden = mode !== 'sensor'; $('meterName').textContent = '腕の振り';
+  $('meterTh').style.left = (refPeak * .55 / METER_MAX * 100) + '%';
+  clearMarks(); placeAim(); setPMsg('', '');
+  phase = 'aim'; setPitchControls(); aimHint();
+}
+
+$('btnSet').addEventListener('click', () => {
+  initAudio();
+  if(mode === 'tap'){
+    if(phase !== 'aim') return;
+    const r = .9 + Math.random() * .15;
+    return throwBall(r, gauss() * 16 * pType.ctrl, gauss() * 16 * pType.ctrl, '');
+  }
+  if(phase === 'aim'){
+    phase = 'set'; lastSwingAt = -1e9;
+    sndSetW(ctx.currentTime + .02);
+    setPMsg('', ''); $('pdetail').textContent = '振りかぶって、腕を振って投げてください';
+  } else if(phase === 'set'){
+    phase = 'aim'; aimHint();
+  }
+  setPitchControls();
+});
+
+function doThrow(pk, vec){
+  const r = clamp(pk / refPeak, .5, 1.35);   // 1.0 = 投球練習での平均の腕の振り
+  throwBall(r, 0, 0, '');
+}
+// 投球位置：基本は狙ったマス付近のストライク。腕の振りが速すぎると、わずかに外れてボールになる
+function pitchLocation(r){
+  const sc = 6 * pType.ctrl;
+  let x = clamp(aim.x + gauss() * sc, -54, 54);
+  let y = clamp(aim.y + gauss() * sc, -69, 69);
+  const pOver = clamp((r - 1.1) / .1, 0, 1);   // 平均の110%で外れ始め、120%以上で必ず外れる
+  if(Math.random() < pOver){
+    let dx = aim.x, dy = aim.y;
+    if(!dx && !dy){ const a = Math.random() * Math.PI * 2; dx = Math.cos(a); dy = Math.sin(a); }
+    const miss = 6 + Math.random() * 12;   // ゾーンの外に6〜18pxだけ外れる
+    if(Math.abs(dx) / 60 >= Math.abs(dy) / 75) x = Math.sign(dx) * (66 + miss);
+    else y = Math.sign(dy) * (81 + miss);
+    return {x, y, over:true};
+  }
+  return {x, y, over:false};
+}
+
+function throwBall(r, ex, ey, note){
+  const kmh = Math.round(clamp(pType.mul * (98 + 42 * r), 70, 163));
+  const loc = pitchLocation(r), fx = loc.x, fy = loc.y;
+  if(loc.over) note = '力みすぎてボール';
+  else if(r > 1.1) note = 'ギリギリ制球できた';
+  const travel = travelFor(kmh);
+  const t0 = ctx.currentTime + .02;
+  sndReleaseW(t0);
+  (pType.id === 'cv' ? sndCurveW : pType.id === 'sl' ? sndSliderW : sndWhooshW)(t0, t0 + travel);
+  if(online){
+    const pd = {name:pType.name, kmh, fx, fy, inZone: Math.abs(fx) <= 66 && Math.abs(fy) <= 81,
+      snd:{st:'st', sl:'sl', cv:'cv', fk:'st', ch:'st'}[pType.id], dx:{st:0, sl:-.3, cv:-.35, fk:0, ch:.05}[pType.id]};
+    online.net.send({t:'pitch', p:pd});
+    phase = 'flight'; setPitchControls();
+    setPMsg('', ''); $('pdetail').textContent = `${pType.name} ${kmh}km/h\n打者の結果を待っています…`;
+    throwAnim = {start: performance.now() + 20, dur: travel * 1000, fx, fy, brk: pType.brk};
+    clearTimeout(pTimer);
+    pTimer = setTimeout(() => { $('pball').setAttribute('opacity', 0); throwAnim = null; }, travel * 1000 + 40);
+    return;
+  }
+  const res = batterDecide(fx, fy, kmh);
+  phase = 'flight'; setPitchControls();
+  setPMsg('', ''); $('pdetail').textContent = '';
+  throwAnim = {start: performance.now() + 20, dur: travel * 1000, fx, fy, brk: pType.brk};
+  clearTimeout(pTimer);
+  pTimer = setTimeout(() => resolvePitch(res, fx, fy, kmh, note), travel * 1000 + 20);
+}
+function animThrow(){
+  const a = throwAnim, ball = $('pball');
+  const s = clamp((performance.now() - a.start) / a.dur, 0, 1);
+  const sx = -6, sy = -70, [bx, by] = a.brk;
+  const k = Math.pow(s, 2.5);
+  const x = sx + (a.fx - bx - sx) * s + bx * k;
+  const y = sy + (a.fy - by - sy) * s + by * k;
+  ball.setAttribute('cx', x); ball.setAttribute('cy', y);
+  ball.setAttribute('r', 1.5 + 6.5 * s * s); ball.setAttribute('opacity', s > 0 ? 1 : 0);
+}
+
+// 打者のAI
+function batterDecide(fx, fy, kmh){
+  const inZone = Math.abs(fx) <= 66 && Math.abs(fy) <= 81;
+  const edge = Math.max(Math.abs(fx) / 60, Math.abs(fy) / 75);
+  const two = pg.strikes === 2;
+  const kankyu = prevKmh != null && Math.abs(prevKmh - kmh) >= 20;
+  let pSwing;
+  if(inZone) pSwing = .8 - .25 * Math.min(edge, 1) + (two ? .2 : 0);
+  else pSwing = (pType.chase && fy > 0 ? .4 : .16) - (edge - 1) * .9 + (two ? .12 : 0) - (pg.balls === 3 && !two ? .1 : 0);
+  if(Math.random() >= clamp(pSwing, .02, .95)) return {swing:false, inZone};
+  let pC = 1.02 - .2 * Math.min(edge, 1.6) - Math.max(0, kmh - 130) / 110 - pType.move - (kankyu ? .1 : 0) - (inZone ? 0 : .15);
+  if(Math.random() >= clamp(pC, .15, .95)) return {swing:true, contact:false, inZone};
+  if(Math.random() < .45) return {swing:true, contact:true, outcome:'foul', inZone};
+  const sweet = inZone ? Math.pow(1 - Math.min(edge, 1), 2) : 0;
+  const pHR = .16 * sweet * (kmh < 120 && pType.id === 'st' ? 1.4 : 1);
+  const pHit = .3 - .1 * Math.min(edge, 1.5);
+  const x = Math.random();
+  let outcome;
+  if(x < pHR) outcome = 'HR';
+  else if(x < pHR + pHit){ const y = Math.random(); outcome = y < .72 ? '1B' : y < .95 ? '2B' : '3B'; }
+  else outcome = ['ゴロ', 'フライ', 'ライナー'][Math.floor(Math.random() * 3)];
+  return {swing:true, contact:true, outcome, inZone};
+}
+
+const sndCatch = () => sndMitt(ctx.currentTime + .005);   // 捕手のミット（打つ側と同じ音）
+function advanceRunners(n){           // n: 進塁数（4=本塁打）
+  let runs = 0; const b = pg.bases;
+  for(let i = 2; i >= 0; i--){ if(b[i]){ b[i] = false; if(i + n >= 3) runs++; else b[i + n] = true; } }
+  if(n >= 4) runs++; else b[n - 1] = true;
+  pg.runs += runs; return runs;
+}
+function walkRunners(){
+  const b = pg.bases; let runs = 0;
+  if(b[0]){ if(b[1]){ if(b[2]) runs++; b[2] = true; } b[1] = true; }
+  b[0] = true; pg.runs += runs; return runs;
+}
+function runnersText(){
+  const names = ['一塁', '二塁', '三塁'].filter((_, i) => pg.bases[i]);
+  if(!names.length) return '走者なし';
+  if(names.length === 3) return '満塁';
+  return '走者 ' + names.join('・');
+}
+
+function resolvePitch(res, fx, fy, kmh, note){
+  $('pball').setAttribute('opacity', 0); throwAnim = null;
+  prevKmh = kmh; pg.pitchNo++;
+  const cur = courseName(fx, fy) + (res.inZone ? '' : '（ボール球）');
+  let label = '', cls = 'bad', speak = '', batterDone = false, extra = '';
+  if(!res.swing){
+    sndCatch();
+    if(res.inZone){ pg.strikes++; label = '見逃しストライク'; speak = 'ストライク'; cls = 'good'; }
+    else { pg.balls++; label = 'ボール'; speak = 'ボール'; }
+  } else if(!res.contact){
+    sndWhiffW(); sndCatch();
+    pg.strikes++; label = '空振り'; speak = '空振り'; cls = 'good';
+  } else if(res.outcome === 'foul'){
+    sndHitW();
+    if(pg.strikes < 2) pg.strikes++;
+    label = 'ファウル'; speak = 'ファウル';
+  } else {
+    batterDone = true;
+    const o = res.outcome;
+    if(o === 'HR'){ sndHomerW(); sndCheer(); pg.hits++; pg.hr++; const r = advanceRunners(4); label = 'ホームラン'; cls = 'big'; speak = 'ホームラン'; extra = `${r}点`; }
+    else if(o === '1B' || o === '2B' || o === '3B'){
+      sndHitW(); pg.hits++;
+      const n = {'1B':1, '2B':2, '3B':3}[o]; const r = advanceRunners(n);
+      label = {'1B':'ヒット', '2B':'ツーベース', '3B':'スリーベース'}[o]; speak = call; cls = 'bad';
+      if(r) extra = `${r}点`;
+    } else {
+      sndHitW(); pg.outs++;
+      label = o === 'ゴロ' ? '内野ゴロ' : o === 'フライ' ? '外野フライ' : 'ライナー'; speak = label; cls = 'good';
+    }
+  }
+  if(!batterDone && pg.strikes >= 3){
+    pg.outs++; pg.k++; batterDone = true;
+    label = res.swing ? '空振り三振' : '見逃し三振'; speak = label; cls = 'good';
+  }
+  if(!batterDone && pg.balls >= 4){
+    batterDone = true; const r = walkRunners(); pg.bb++;
+    label = 'フォアボール'; speak = 'フォアボール'; cls = 'bad'; if(r) extra = '押し出し';
+  }
+  const color = !res.swing ? (res.inZone ? '#f2c230' : '#8be394') : (res.contact && res.outcome !== 'foul' ? '#f5f4ee' : '#f2c230');
+  addMark(fx, fy, pg.pitchNo, color);
+  if(batterDone){ pg.batters++; pg.balls = 0; pg.strikes = 0; }
+  renderPBoard();
+  setPMsg(label, cls); call(speak);
+  $('pdetail').textContent = `${pType.name} ${kmh}km/h ／ 狙い ${courseName(aim.x, aim.y)} → ${cur}${note ? ' ／ ' + note : ''}\n${extra ? extra + ' ／ ' : ''}${runnersText()} ／ 失点 ${pg.runs}`;
+  phase = 'presult'; setPitchControls();
+  clearTimeout(pTimer);
+  if(pg.outs >= 3){ pTimer = setTimeout(pitchGameOver, 2600); return; }
+  pTimer = setTimeout(() => {
+    if(batterDone){ clearMarks(); pg.pitchNo = 0; }
+    phase = 'aim'; setPitchControls(); aimHint(); setPMsg(batterDone ? '次の打者' : '', '');
+  }, batterDone ? 2600 : 1700);
+}
+function pitchGameOver(){
+  call('ゲームセット');
+  phase = 'over';
+  $('overStats').textContent = `打者${pg.batters}人に対して、奪三振${pg.k}、被安打${pg.hits}（被本塁打${pg.hr}）、与四球${pg.bb}、失点${pg.runs}`;
+  showOnly('over');
+  try{ wakeLock && wakeLock.release(); }catch(e){}
+}
+function quitToMenu(){
+  leaveOnline();
+  $('btnAgain').textContent = 'もう一度プレイ';
+  clearTimeout(nextTimer); clearTimeout(pTimer);
+  if(pitch) clearTimeout(pitch.timeout);
+  pitch = null; throwAnim = null; paused = false;
+  phase = 'intro'; game = null; pg = null;
+  setGameMode(gameMode); showOnly('title');
+  try{ wakeLock && wakeLock.release(); }catch(e){}
+}
+$('modeBat').addEventListener('click', () => { setGameMode('bat'); showOnly('intro'); });
+$('modePitch').addEventListener('click', () => { setGameMode('pitch'); showOnly('intro'); });
+$('btnBack').addEventListener('click', () => showOnly('title'));
+$('btnQuit').addEventListener('click', quitToMenu);
+$('btnMenu').addEventListener('click', quitToMenu);
+
+
+/* ================= 通信対戦 ================= */
+const INNINGS = 2;
+const localTest = new URLSearchParams(location.search).has('local');   // 開発用：同じ端末の2タブで対戦テスト
+let online = null, pendingPitch = null, oTimer = null, lobbyUseSensor = true;
+const other = side => side === 'host' ? 'guest' : 'host';
+const newState = () => ({half:0, outs:0, balls:0, strikes:0, bases:[false,false,false], score:{host:0, guest:0}, pitchNo:0, over:false, last:null, seq:0});
+const battingSide = st => st.half % 2 === 0 ? 'guest' : 'host';   // 表＝ゲストの攻撃、裏＝ホストの攻撃
+const iBat = () => !!online && !!online.state && battingSide(online.state) === online.me;
+
+function makeNet(isHost, code, h){
+  if(localTest){
+    const ch = new BroadcastChannel('furusuma-' + code), me = isHost ? 'host' : 'guest';
+    ch.onmessage = e => {
+      const d = e.data; if(d.to !== me) return;
+      if(d.sys === 'hello'){ ch.postMessage({to:'guest', sys:'ack'}); return h.open(); }
+      if(d.sys === 'ack') return h.open();
+      h.msg(d.msg);
+    };
+    if(!isHost) ch.postMessage({to:'host', sys:'hello'});
+    return {send: m => ch.postMessage({to: other(me), msg: m}), close: () => ch.close()};
+  }
+  if(typeof Peer === 'undefined'){ setTimeout(() => h.err({type:'no-lib'}), 0); return {send(){}, close(){}}; }
+  const id = 'furusuma-v1-' + code;
+  let conn = null, closed = false;
+  const peer = isHost ? new Peer(id) : new Peer();
+  const wire = c => {
+    conn = c;
+    c.on('open', () => h.open());
+    c.on('data', d => h.msg(d));
+    c.on('close', () => { if(!closed) h.close(); });
+    c.on('error', e => h.err(e));
+  };
+  peer.on('error', e => h.err(e));
+  peer.on('disconnected', () => { if(!closed) try{ peer.reconnect(); }catch(e){} });
+  if(isHost){
+    peer.on('open', () => h.ready && h.ready());
+    peer.on('connection', c => { if(conn){ try{ c.close(); }catch(e){} return; } wire(c); });
+  } else {
+    peer.on('open', () => wire(peer.connect(id, {reliable:true})));
+  }
+  return {
+    send: m => { try{ if(conn && conn.open) conn.send(m); }catch(e){} },
+    close: () => { closed = true; try{ conn && conn.close(); }catch(e){} try{ peer.destroy(); }catch(e){} },
+  };
+}
+
+function unlockSpeech(){
+  try{ const u = new SpeechSynthesisUtterance('あ'); u.volume = 0; speechSynthesis.speak(u); }catch(e){}
+}
+function prepareInput(){
+  initAudio(); unlockSpeech();
+  try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').then(w => wakeLock = w).catch(() => {}); }catch(e){}
+  if(lobbyUseSensor){
+    if(typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function'){
+      try{ DeviceMotionEvent.requestPermission().catch(() => {}); }catch(e){}
+    }
+    if(!listening){ window.addEventListener('devicemotion', onMotion); listening = true; }
+    mode = 'sensor';
+    threshold = 350; refPeak = refPeak || 1100;
+    setTimeout(() => { if(!gotMotion && online){ mode = 'tap'; showLobbyNote('センサーが使えなかったため、タップ操作で遊びます。'); } }, 2500);
+  } else {
+    mode = 'tap';
+    if(listening){ window.removeEventListener('devicemotion', onMotion); listening = false; }
+  }
+}
+function showLobbyNote(t){ const e = $('lobbyErr'); e.textContent = t; e.hidden = false; }
+function resetLobby(){
+  $('lobbyForm').hidden = false; $('roomBox').hidden = true; $('btnLobbyCancel').hidden = true;
+  $('lobbyErr').hidden = true; $('roomInput').value = '';
+}
+function openLobby(){ leaveOnline(); resetLobby(); showOnly('lobby'); phase = 'lobby'; }
+function leaveOnline(){
+  clearTimeout(oTimer); pendingPitch = null;
+  if(online){ const n = online.net; online = null; try{ n.close(); }catch(e){} }
+}
+function netHandlers(){
+  return {
+    open: () => {
+      $('lobbyStatus').textContent = online && online.me === 'host' ? 'つながりました！' : 'つながりました！ 開始を待っています…';
+      if(online && online.me === 'host') setTimeout(() => online && hostStart(), 900);
+    },
+    msg: onNetMsg,
+    close: () => { if(!online) return; leaveOnline(); resetLobby(); showOnly('lobby'); phase = 'lobby'; showLobbyNote('相手との接続が切れました。'); },
+    err: e => {
+      const type = e && e.type;
+      if(type === 'unavailable-id' && online && online.me === 'host'){ leaveOnline(); return createRoom(); }
+      const msg = type === 'peer-unavailable' ? 'その番号の部屋が見つかりませんでした。番号を確認してください。'
+        : type === 'no-lib' ? '通信用のプログラムを読み込めませんでした。電波の良い場所でページを開き直してください。'
+        : '中継サーバーにつながりませんでした。少し待ってからやり直してください。';
+      leaveOnline(); resetLobby(); showOnly('lobby'); phase = 'lobby'; showLobbyNote(msg);
+    },
+  };
+}
+function createRoom(){
+  const code = String(Math.floor(1000 + Math.random() * 9000));
+  online = {me:'host', state:null, code};
+  online.net = makeNet(true, code, netHandlers());
+  $('lobbyForm').hidden = true; $('roomBox').hidden = false; $('btnLobbyCancel').hidden = false;
+  $('roomLabel').textContent = '部屋番号（相手に伝えてください）';
+  $('roomCode').textContent = code; $('lobbyStatus').textContent = '相手が入るのを待っています…';
+}
+function joinRoom(code){
+  online = {me:'guest', state:null, code};
+  online.net = makeNet(false, code, netHandlers());
+  $('lobbyForm').hidden = true; $('roomBox').hidden = false; $('btnLobbyCancel').hidden = false;
+  $('roomLabel').textContent = '入室する部屋';
+  $('roomCode').textContent = code; $('lobbyStatus').textContent = '接続しています…';
+}
+
+function onNetMsg(m){
+  if(!online || !m) return;
+  if(m.t === 'start' || m.t === 'state'){ online.state = m.state; handleState(m.t === 'start'); }
+  else if(m.t === 'pitch'){ if(iBat()){ pendingPitch = m.p; tryStartPitch(); } }
+  else if(m.t === 'result'){ if(online.me === 'host') hostApply(m.r); }
+  else if(m.t === 'rematch'){ if(online.me === 'host') hostStart(); }
+}
+function send(t, extra){ online && online.net.send(Object.assign({t}, extra || {})); }
+function hostStart(){
+  if(!online) return;
+  online.state = newState();
+  send('start', {state: online.state});
+  handleState(true);
+}
+function requestRematch(){
+  if(!online) return;
+  $('overStats').textContent += '\n相手を待っています…';
+  if(online.me === 'host') hostStart(); else send('rematch');
+}
+
+// ---- 打者側：結果を報告 ----
+function reportBat(r){
+  phase = 'owait';
+  const pd = pitch && pitch.online;
+  if(!pd) return;
+  r.pitch = {name:pd.name, kmh:pd.kmh, fx:pd.fx, fy:pd.fy, inZone:pd.inZone};
+  if(online.me === 'host') hostApply(r); else send('result', {r});
+}
+function tryStartPitch(){
+  if(!iBat() || phase !== 'wait' || !pendingPitch) return;
+  const p = pendingPitch; pendingPitch = null;
+  initAudio();
+  throwPitch(p);
+}
+
+// ---- ホストが試合を進行（両者に同じ状態を配る） ----
+function advanceOn(st, n){
+  let runs = 0; const b = st.bases;
+  for(let i = 2; i >= 0; i--){ if(b[i]){ b[i] = false; if(i + n >= 3) runs++; else b[i + n] = true; } }
+  if(n >= 4) runs++; else b[n - 1] = true;
+  return runs;
+}
+function walkOn(st){
+  const b = st.bases; let runs = 0;
+  if(b[0]){ if(b[1]){ if(b[2]) runs++; b[2] = true; } b[1] = true; }
+  b[0] = true; return runs;
+}
+function hostApply(r){
+  const st = online.state, pd = r.pitch, batSide = battingSide(st);
+  st.pitchNo++;
+  const no = st.pitchNo;
+  let label = '', speak = '', favorBat = false, done = false, runs = 0;
+  if(r.kind === 'take'){
+    if(pd.inZone){ st.strikes++; label = '見逃し'; speak = 'ストライク'; }
+    else { st.balls++; label = 'ボール'; speak = 'ボール'; favorBat = true; }
+  } else if(r.kind === 'whiff'){ st.strikes++; label = '空振り'; speak = '空振り'; }
+  else if(r.kind === 'foul'){ if(st.strikes < 2) st.strikes++; label = 'ファウル'; speak = 'ファウル'; }
+  else {
+    done = true; label = r.outcome; speak = r.outcome;
+    const n = {'ヒット':1, '内野安打':1, 'ツーベース':2, 'スリーベース':3, 'ホームラン':4}[r.outcome];
+    if(n){ favorBat = true; runs = advanceOn(st, n); } else st.outs++;
+  }
+  if(!done && st.strikes >= 3){ done = true; st.outs++; label = r.kind === 'take' ? '見逃し三振' : '空振り三振'; speak = label; favorBat = false; }
+  if(!done && st.balls >= 4){ done = true; runs = walkOn(st); label = 'フォアボール'; speak = 'フォアボール'; favorBat = true; }
+  st.score[batSide] += runs;
+  if(done){ st.balls = 0; st.strikes = 0; st.pitchNo = 0; }
+  const inning = Math.floor(st.half / 2) + 1, top = st.half % 2 === 0;
+  let over = false, halfEnded = false;
+  if(!top && inning >= INNINGS && st.score.host > st.score.guest) over = true;           // サヨナラ
+  if(st.outs >= 3 && !over){
+    halfEnded = true;
+    st.half++; st.outs = 0; st.balls = 0; st.strikes = 0; st.bases = [false,false,false];
+    if(st.half >= INNINGS * 2) over = true;
+    else if(st.half === INNINGS * 2 - 1 && st.score.host > st.score.guest) over = true;  // 最終回の裏は不要
+  }
+  st.over = over; st.seq++;
+  st.last = {kind:r.kind, outcome:r.outcome || '', label, speak, say:r.say || '', snd:r.snd || '', favorBat, batSide, runs, halfEnded, newBatter:done, no,
+    fx:pd.fx, fy:pd.fy, inZone:pd.inZone,
+    detail:`${pd.name} ${pd.kmh}km/h ／ ${courseName(pd.fx, pd.fy)}${pd.inZone ? '' : '（ボール球）'}${r.bdetail ? '\n' + r.bdetail : ''}`};
+  send('state', {state: st});
+  handleState(false);
+}
+
+// ---- 両者：状態を画面に反映 ----
+function renderOBoard(){
+  const st = online.state, me = online.me;
+  $('bRow').hidden = false;
+  document.querySelectorAll('.lamp.b').forEach((l,i) => l.classList.toggle('on', i < st.balls));
+  document.querySelectorAll('.lamp.s').forEach((l,i) => l.classList.toggle('on', i < st.strikes));
+  document.querySelectorAll('.lamp.o').forEach((l,i) => l.classList.toggle('on', i < st.outs));
+  const h = Math.min(st.half, INNINGS * 2 - 1);
+  $('stL1').textContent = '回'; $('stPa').textContent = (Math.floor(h / 2) + 1) + (h % 2 ? '裏' : '表');
+  $('stL2').textContent = 'あなた'; $('stHit').textContent = st.score[me];
+  $('stL3').textContent = '相手'; $('stHr').textContent = st.score[other(me)];
+}
+function situationText(){
+  const st = online.state, names = ['一塁','二塁','三塁'].filter((_, i) => st.bases[i]);
+  const runners = !names.length ? '走者なし' : names.length === 3 ? '満塁' : '走者 ' + names.join('・');
+  return `${runners} ／ ${st.outs}アウト`;
+}
+function enterRole(){
+  const bat = iBat();
+  $('btnPause').hidden = true; $('btnRecal').hidden = true;
+  $('meterBox').hidden = mode !== 'sensor';
+  clearTimeout(nextTimer); clearTimeout(pTimer);
+  if(pitch) clearTimeout(pitch.timeout);
+  pitch = null; throwAnim = null;
+  if(bat){
+    showOnly('play'); showPitchView();
+    $('tapHint').hidden = mode !== 'tap';
+    $('meterName').textContent = 'スイング速度';
+    $('meterTh').style.left = (threshold / METER_MAX * 100) + '%';
+  } else {
+    showOnly('pplay'); clearMarks(); placeAim();
+    $('meterName').textContent = '腕の振り';
+    $('meterTh').style.left = (refPeak * .55 / METER_MAX * 100) + '%';
+    document.querySelectorAll('#ptypes button').forEach(x => x.setAttribute('aria-pressed', x.textContent === pType.name));
+  }
+  renderOBoard();
+}
+function resumeRole(){
+  if(!online) return;
+  if(iBat()){
+    phase = 'wait'; setMsg('', '');
+    $('detail').textContent = `相手の投球を待っています\n${situationText()}`;
+    tryStartPitch();
+  } else {
+    phase = 'aim'; setPitchControls(); aimHint(); setPMsg('', '');
+  }
+}
+function playEventSounds(ev){
+  if(ev.kind === 'take') sndCatch();
+  else if(ev.kind === 'whiff'){ sndWhiffW(); sndCatch(); }
+  else if(ev.kind === 'foul') sndHitW();
+  else if(ev.snd === 'homer' || ev.outcome === 'ホームラン'){ sndHomerW(); sndCheer(); }
+  else if(ev.snd === 'hit') sndHitW();
+  else if(ev.runs || ['ヒット','内野安打','ツーベース','スリーベース'].includes(ev.outcome)) sndHitW();
+  else sndHitW();
+}
+function handleState(isStart){
+  if(!online || !online.state) return;
+  const st = online.state;
+  clearTimeout(oTimer);
+  if(isStart){
+    pendingPitch = null;
+    call('プレイボール');
+    enterRole();
+    const bat = iBat();
+    const text = bat ? 'あなたの攻撃' : 'あなたの守備';
+    const sub = `1回表　${bat ? '音を聞いて打ってください' : '球種とコースを選んで投げてください'}`;
+    if(bat){ setMsg(text, 'good'); $('detail').textContent = sub; } else { setPMsg(text, 'good'); $('pdetail').textContent = sub; }
+    oTimer = setTimeout(resumeRole, 1800);
+    return;
+  }
+  const ev = st.last;
+  const iWasBat = ev.batSide === online.me;
+  if(!iWasBat) playEventSounds(ev);
+  if(ev.kind === 'inplay' && ev.say && ev.label === ev.outcome) speak('ann', ev.say); else call(ev.speak);
+  renderOBoard();
+  const good = iWasBat ? ev.favorBat : !ev.favorBat;
+  const cls = ev.outcome === 'ホームラン' ? 'big' : good ? 'good' : 'bad';
+  const tail = ev.halfEnded ? 'スリーアウト、チェンジ' : `${ev.runs ? ev.runs + '点 ／ ' : ''}${situationText()}`;
+  if(iWasBat){ setMsg(ev.label, cls); $('detail').textContent = `${ev.detail}\n${tail}`; }
+  else {
+    setPMsg(ev.label, cls); $('pdetail').textContent = `${ev.detail}\n${tail}`;
+    addMark(ev.fx, ev.fy, ev.no, ev.kind === 'take' ? (ev.inZone ? '#f2c230' : '#8be394') : ev.kind === 'inplay' ? '#f5f4ee' : '#f2c230');
+    phase = 'presult'; setPitchControls();
+  }
+  const wait = ev.outcome === 'ホームラン' ? 3400 : ev.newBatter ? 2600 : 2000;
+  oTimer = setTimeout(() => {
+    if(!online) return;
+    if(st.over) return onlineOver();
+    if(ev.halfEnded){
+      enterRole();
+      const bat = iBat(), h = online.state.half;
+      const text = bat ? 'あなたの攻撃' : 'あなたの守備';
+      const sub = `${Math.floor(h / 2) + 1}回${h % 2 ? '裏' : '表'}`;
+      if(bat){ setMsg(text, 'good'); $('detail').textContent = sub; } else { setPMsg(text, 'good'); $('pdetail').textContent = sub; }
+      oTimer = setTimeout(resumeRole, 1800);
+      return;
+    }
+    if(!iBat() && ev.newBatter) clearMarks();
+    resumeRole();
+  }, wait);
+}
+function onlineOver(){
+  const st = online.state, me = st.score[online.me], op = st.score[other(online.me)];
+  call('ゲームセット');
+  phase = 'over';
+  $('overStats').textContent = `あなた ${me} − ${op} 相手\n${me > op ? '勝ち！' : me < op ? '負け…' : '引き分け'}`;
+  $('overStats').style.whiteSpace = 'pre-line';
+  $('btnAgain').textContent = '同じ相手ともう一度';
+  showOnly('over');
+}
+
+// ---- ロビーの操作 ----
+$('modeOnline').addEventListener('click', openLobby);
+$('btnLobbyBack').addEventListener('click', () => { leaveOnline(); showOnly('title'); });
+$('btnLobbyCancel').addEventListener('click', () => { leaveOnline(); resetLobby(); });
+$('lbSensor').addEventListener('click', () => { lobbyUseSensor = true; $('lbSensor').setAttribute('aria-pressed', true); $('lbTap').setAttribute('aria-pressed', false); });
+$('lbTap').addEventListener('click', () => { lobbyUseSensor = false; $('lbSensor').setAttribute('aria-pressed', false); $('lbTap').setAttribute('aria-pressed', true); });
+$('btnCreate').addEventListener('click', () => { $('lobbyErr').hidden = true; prepareInput(); createRoom(); });
+$('btnJoin').addEventListener('click', () => {
+  const code = $('roomInput').value.replace(/\D/g, '');
+  if(code.length !== 4) return showLobbyNote('4桁の番号を入力してください。');
+  $('lobbyErr').hidden = true; prepareInput(); joinRoom(code);
+});
+$('roomInput').addEventListener('keydown', e => { if(e.key === 'Enter') $('btnJoin').click(); });
+
+/* ================= アプリ化（PWA） ================= */
+const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+let installPrompt = null;
+if('serviceWorker' in navigator && location.protocol === 'https:'){
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; if(!isStandalone()) $('btnInstall').hidden = false; });
+window.addEventListener('appinstalled', () => { $('btnInstall').hidden = true; $('installTip').hidden = true; });
+if(!isStandalone() && isIOS) $('btnInstall').hidden = false;   // iPhoneは追加方法の案内を出す
+$('btnInstall').addEventListener('click', async () => {
+  if(installPrompt){
+    installPrompt.prompt();
+    try{ await installPrompt.userChoice; }catch(e){}
+    installPrompt = null; $('btnInstall').hidden = true;
+    return;
+  }
+  const tip = $('installTip');
+  if(!tip.hidden){ tip.hidden = true; $('title').classList.remove('tip-open'); return; }
+  $('title').classList.add('tip-open');
+  tip.innerHTML = isIOS
+    ? '<b>Safari</b>で開いた状態で、画面下の<b>共有ボタン</b>（四角から上矢印が出ているマーク）を押し、<b>「ホーム画面に追加」</b>を選んでください。ホーム画面の「ふるスマ」アイコンから全画面で起動できます。'
+    : 'ブラウザのメニュー（︙）から<b>「ホーム画面に追加」</b>または<b>「アプリをインストール」</b>を選んでください。';
+  tip.hidden = false;
+});
+
+/* ---------- controls ---------- */
+function tapSwing(e){
+  if(mode !== 'tap') return;
+  if(e && e.type === 'pointerdown') e.preventDefault();
+  onSwing(performance.now(), refPeak);
+}
+$('btnSensor').addEventListener('click', startSensor);
+$('btnTest').addEventListener('click', () => {
+  initAudio();
+  const t = ctx.currentTime + .15;
+  sndSetW(t); sndReleaseW(t + .5); sndWhooshW(t + .5, t + 1.3); sndArriveW(t + 1.3);
+  setTimeout(sndWhiffW, 1800);
+  setTimeout(sndHitW, 2600);
+  setTimeout(() => { sndHomerW(); sndCheer(); }, 3600);
+  setTimeout(() => call('ストライク'), 5400);
+  setTimeout(() => call('ホームラン'), 7000);
+  $('testInfo').hidden = false;
+  $('testInfo').textContent = `「ピッ→パン→シュー→チッ」のあと、空振りのブン、ヒットのカキーン、ホームランのカァァァン！、最後に審判と実況の声が流れます。（音声の状態: ${ctx.state} ／ 声: ${voiceLabel()}）`;
+});
+$('btnOpen').addEventListener('click', openStandalone);
+function goTap(){ initAudio(); mode = 'tap'; if(listening){ window.removeEventListener('devicemotion', onMotion); listening = false; } startGame(); }
+$('btnTap').addEventListener('click', goTap);
+$('btnTap2').addEventListener('click', goTap);
+$('btnBat').addEventListener('click', startGame);
+$('btnSkip').addEventListener('click', () => { threshold = 350; refPeak = 1100; throwAxis = null; startGame(); });
+$('btnAgain').addEventListener('click', () => {
+  if(online) return requestRematch();
+  if(mode === 'sensor' && !gotMotion) mode = 'tap'; startGame();
+});
+$('btnRecal').addEventListener('click', () => { clearTimeout(nextTimer); clearTimeout(pTimer); if(pitch) clearTimeout(pitch.timeout); pitch = null; throwAnim = null; enterCalib(); });
+$('btnPause').addEventListener('click', () => {
+  paused = !paused;
+  $('btnPause').textContent = paused ? '再開' : '一時停止';
+  if(paused){ clearTimeout(nextTimer); $('detail').textContent = '一時停止中'; }
+  else if(phase === 'wait'){ initAudio(); $('detail').textContent = '次の投球を待っています'; scheduleNext(1200); }
+});
+$('view').addEventListener('pointerdown', tapSwing);
+document.addEventListener('keydown', e => { if(e.code === 'Space' && mode === 'tap' && !$('play').hidden){ e.preventDefault(); tapSwing(); } });
+document.addEventListener('visibilitychange', () => {
+  if(!document.hidden && 'speechSynthesis' in window){ try{ speechSynthesis.cancel(); speechSynthesis.resume(); }catch(e){} }
+  if(online) return;
+  if(document.hidden && !$('play').hidden && !paused){ $('btnPause').click(); }
+});
+</script>
+</body>
+</html>
