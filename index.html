@@ -132,6 +132,31 @@ body{height:100%;margin:0;color:var(--ink);
 .pnlog li{display:flex;gap:8px;align-items:center}
 .pnlog .wl{font-family:"Dela Gothic One",sans-serif;width:1.4em;text-align:center}
 .pnlog .w{color:var(--blue)} .pnlog .l{color:var(--out)} .pnlog .d{color:var(--ink-2)}
+.linewrap{overflow-x:auto;background:var(--card);border-radius:14px;box-shadow:0 2px 8px rgba(10,50,120,.06);flex:none}
+.lines{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+.lines th,.lines td{padding:5px 2px;text-align:center;font-size:.78rem;min-width:18px}
+.lines th{font-size:.64rem;color:var(--ink-2);font-weight:700}
+.lines td.tn{text-align:left;padding-left:8px;font-weight:700;white-space:nowrap}
+.lines td.tn i{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:5px}
+.lines td.tot{font-family:"Dela Gothic One",sans-serif;font-size:.95rem;border-left:1px solid var(--line)}
+.lines td.cur{background:color-mix(in srgb,var(--blue) 14%,transparent);border-radius:4px}
+.lines tr.mine td.tn{color:var(--blue)}
+.dhsit{display:flex;gap:12px;align-items:center;flex:none}
+.diamond{width:60px;flex:none}
+.diamond rect{fill:var(--lamp-off);stroke:var(--ink-2);stroke-width:.8}
+.diamond rect.on{fill:var(--strike);stroke:var(--ink)}
+.dhsit-main{margin:0;font-weight:700;font-size:1rem}
+.dhsit-sub{margin:2px 0 0;font-size:.8rem;color:var(--ink-2);line-height:1.5}
+.turn{flex:none;background:var(--card);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:8px;border:2px solid var(--blue)}
+.turn-main{margin:0;font-size:1.2rem;transform:skewX(-8deg);transform-origin:left}
+.pbp{flex:1;min-height:120px;overflow:auto;margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:2px}
+.pbp li{font-size:.84rem;line-height:1.5;padding:4px 8px;border-radius:8px}
+.pbp li.new{animation:rise .25s ease-out both}
+.pbp li.hd{font-weight:700;color:var(--ink-2);font-size:.76rem;letter-spacing:.06em;padding-top:8px}
+.pbp li.sc{font-weight:700;background:color-mix(in srgb,var(--out) 10%,transparent)}
+.pbp li.sc.mine{background:color-mix(in srgb,var(--blue) 12%,transparent);color:var(--blue)}
+.pbp li.me{border-left:4px solid var(--blue);font-weight:700}
+.pbp li.chg{color:var(--ink-2);font-size:.78rem}
 .back{align-self:flex-start;background:none;border:0;color:var(--ink-2);padding:6px 0;min-height:36px;font-size:.9rem}
 
 button{font:inherit;font-weight:700;border-radius:14px;padding:14px 16px;cursor:pointer;min-height:48px;transition:transform .08s,box-shadow .15s,background .15s}
@@ -380,7 +405,7 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
       <button class="back" id="btnPnBack">‹ タイトルへ</button>
       <div id="pnSetup" class="ib">
         <h2 class="display">ペナントレース</h2>
-        <p>6球団のリーグで優勝を争います。1試合は3イニング制。攻撃のときは音を聞いて打ち、守備のときは自分で投げます。ほかのカードの結果は自動で決まります。</p>
+        <p>あなたは<b>4番・指名打者</b>。9イニングの試合は、先発投手もほかの打者も、すべて自動で進みます。あなたが操作できるのは、1試合に4〜5回まわってくる自分の打席だけ。打って、チームをリーグ優勝へ導こう。</p>
         <p class="sec-label">あなたのチーム</p>
         <div class="pitchers" id="pnTeams" role="group" aria-label="チーム"></div>
         <p class="sec-label">試合数</p>
@@ -395,17 +420,39 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
             <button id="pnSensor" aria-pressed="true">スマホを振って遊ぶ</button>
             <button id="pnTap" aria-pressed="false">タップで遊ぶ</button>
           </div>
-          <button class="primary" id="btnPnPlay">試合開始</button>
+          <button class="primary" id="btnPnPlay">プレイボール</button>
           <button class="ghost" id="btnPnSim">この試合を自動で進める</button>
         </div>
         <button class="primary" id="btnPnRestart" hidden>新しいシーズンを始める</button>
         <p class="sec-label">順位表</p>
         <table class="stand" id="pnTable"></table>
-        <p class="sec-label">あなたの成績</p>
+        <p class="sec-label">あなたの成績（4番・DH）</p>
         <p class="detail" id="pnStats" style="text-align:left;min-height:0"></p>
         <p class="sec-label" id="pnLogLabel">最近の試合</p>
         <ul class="pnlog" id="pnLog"></ul>
         <div class="actions"><button class="ghost" id="btnPnReset">シーズンを破棄して最初から</button></div>
+      </div>
+    </section>
+
+    <section id="dhgame" class="panel" hidden>
+      <div class="linewrap"><table class="lines" id="dhLine"></table></div>
+      <div class="dhsit">
+        <svg class="diamond" viewBox="0 0 60 44" aria-hidden="true">
+          <rect id="dhB2" x="25" y="3" width="10" height="10" transform="rotate(45 30 8)"/>
+          <rect id="dhB3" x="9" y="19" width="10" height="10" transform="rotate(45 14 24)"/>
+          <rect id="dhB1" x="41" y="19" width="10" height="10" transform="rotate(45 46 24)"/>
+        </svg>
+        <div><p class="dhsit-main" id="dhSit"></p><p class="dhsit-sub" id="dhSub"></p></div>
+      </div>
+      <div class="turn" id="dhTurn" hidden>
+        <p class="sec-label">次はあなたの打席</p>
+        <p class="turn-main display" id="dhTurnMain"></p>
+        <button class="primary" id="btnDhGo">打席に入る</button>
+      </div>
+      <ul class="pbp" id="dhLog" aria-live="polite"></ul>
+      <div class="btns">
+        <button class="ghost" id="btnDhFast">自分の打席まで飛ばす</button>
+        <button class="ghost" id="btnDhQuit">試合をやめる</button>
       </div>
     </section>
 
@@ -839,7 +886,7 @@ function openStandalone(){
 
 /* ---------- screens ---------- */
 function showOnly(id){
-  ['title','intro','lobby','pennant','calib','play','pplay','over'].forEach(s => $(s).hidden = s !== id);
+  ['title','intro','lobby','pennant','dhgame','calib','play','pplay','over'].forEach(s => $(s).hidden = s !== id);
   $('board').hidden = id === 'title' || id === 'intro' || id === 'lobby' || id === 'pennant';
   $('controls').hidden = !(id === 'play' || id === 'pplay');
 }
@@ -1467,7 +1514,7 @@ $('modeBat').addEventListener('click', () => { setGameMode('bat'); showOnly('int
 $('modePitch').addEventListener('click', () => { setGameMode('pitch'); showOnly('intro'); });
 $('btnBack').addEventListener('click', () => showOnly('title'));
 $('btnQuit').addEventListener('click', () => {
-  if(online && online.cpu){
+  if(online && online.dh){
     if(!confirm('この試合をやめますか？（結果は記録されません）')) return;
     quitToMenu(); return openPennant();
   }
@@ -1480,7 +1527,6 @@ $('btnMenu').addEventListener('click', quitToMenu);
 const INNINGS = 2;
 const localTest = new URLSearchParams(location.search).has('local');   // 開発用：同じ端末の2タブで対戦テスト
 let online = null, pendingPitch = null, oTimer = null, lobbyUseSensor = true;
-const innings = () => (online && online.innings) || INNINGS;
 const other = side => side === 'host' ? 'guest' : 'host';
 const newState = () => ({half:0, outs:0, balls:0, strikes:0, bases:[false,false,false], score:{host:0, guest:0}, pitchNo:0, over:false, last:null, seq:0});
 const battingSide = st => st.half % 2 === 0 ? 'guest' : 'host';   // 表＝ゲストの攻撃、裏＝ホストの攻撃
@@ -1612,6 +1658,7 @@ function reportBat(r){
   const pd = pitch && pitch.online;
   if(!pd) return;
   r.pitch = {name:pd.name, kmh:pd.kmh, fx:pd.fx, fy:pd.fy, inZone:pd.inZone};
+  if(online.dh) return dhApply(r);
   if(online.me === 'host') hostApply(r); else send('result', {r});
 }
 function tryStartPitch(){
@@ -1651,16 +1698,15 @@ function hostApply(r){
   if(!done && st.strikes >= 3){ done = true; st.outs++; label = r.kind === 'take' ? '見逃し三振' : '空振り三振'; speak = label; favorBat = false; }
   if(!done && st.balls >= 4){ done = true; runs = walkOn(st); label = 'フォアボール'; speak = 'フォアボール'; favorBat = true; }
   st.score[batSide] += runs;
-  if(online.cpu) pennantTrack(batSide === online.me, r, label, done, runs);
   if(done){ st.balls = 0; st.strikes = 0; st.pitchNo = 0; }
   const inning = Math.floor(st.half / 2) + 1, top = st.half % 2 === 0;
   let over = false, halfEnded = false;
-  if(!top && inning >= innings() && st.score.host > st.score.guest) over = true;           // サヨナラ
+  if(!top && inning >= INNINGS && st.score.host > st.score.guest) over = true;           // サヨナラ
   if(st.outs >= 3 && !over){
     halfEnded = true;
     st.half++; st.outs = 0; st.balls = 0; st.strikes = 0; st.bases = [false,false,false];
-    if(st.half >= innings() * 2) over = true;
-    else if(st.half === innings() * 2 - 1 && st.score.host > st.score.guest) over = true;  // 最終回の裏は不要
+    if(st.half >= INNINGS * 2) over = true;
+    else if(st.half === INNINGS * 2 - 1 && st.score.host > st.score.guest) over = true;  // 最終回の裏は不要
   }
   st.over = over; st.seq++;
   st.last = {kind:r.kind, outcome:r.outcome || '', label, speak, say:r.say || '', snd:r.snd || '', favorBat, batSide, runs, halfEnded, newBatter:done, no,
@@ -1677,11 +1723,10 @@ function renderOBoard(){
   document.querySelectorAll('.lamp.b').forEach((l,i) => l.classList.toggle('on', i < st.balls));
   document.querySelectorAll('.lamp.s').forEach((l,i) => l.classList.toggle('on', i < st.strikes));
   document.querySelectorAll('.lamp.o').forEach((l,i) => l.classList.toggle('on', i < st.outs));
-  const h = Math.min(st.half, innings() * 2 - 1);
+  const h = Math.min(st.half, INNINGS * 2 - 1);
   $('stL1').textContent = '回'; $('stPa').textContent = (Math.floor(h / 2) + 1) + (h % 2 ? '裏' : '表');
-  const cpu = online.cpu;
-  $('stL2').textContent = cpu ? TEAMS[cpu.my].short : 'あなた'; $('stHit').textContent = st.score[me];
-  $('stL3').textContent = cpu ? TEAMS[cpu.opp].short : '相手'; $('stHr').textContent = st.score[other(me)];
+  $('stL2').textContent = 'あなた'; $('stHit').textContent = st.score[me];
+  $('stL3').textContent = '相手'; $('stHr').textContent = st.score[other(me)];
 }
 function situationText(){
   const st = online.state, names = ['一塁','二塁','三塁'].filter((_, i) => st.bases[i]);
@@ -1713,8 +1758,7 @@ function resumeRole(){
   if(iBat()){
     phase = 'wait'; setMsg('', '');
     $('detail').textContent = `相手の投球を待っています\n${situationText()}`;
-    if(online.cpu) online.net.later(cpuThrow, 1300 + Math.random() * 900);
-    else tryStartPitch();
+    tryStartPitch();
   } else {
     phase = 'aim'; setPitchControls(); aimHint(); setPMsg('', '');
   }
@@ -1775,7 +1819,6 @@ function handleState(isStart){
   }, wait);
 }
 function onlineOver(){
-  if(online.cpu) return pennantOver();
   const st = online.state, me = st.score[online.me], op = st.score[other(online.me)];
   call('ゲームセット');
   phase = 'over';
@@ -1800,23 +1843,41 @@ $('btnJoin').addEventListener('click', () => {
 $('roomInput').addEventListener('keydown', e => { if(e.key === 'Enter') $('btnJoin').click(); });
 
 /* ================= ペナントモード ================= */
-// 通信対戦の仕組みをそのまま使い、相手側をCPUが受け持つ（打つ・投げるの判定はすべて同じ）
-// pitcher: 打つときに対戦する投手タイプ（PITCHERSのid）、bat/pit: 打力・投手力（1=標準）
+// あなたは4番・指名打者。試合は1打席ずつ自動で進み、操作できるのは自分の打席だけ
+// pitcher: 投手の傾向、bat/pit: チームの打力・投手力（1=標準）
 const TEAMS = [
-  {name:'青空ウィングス', short:'青空', color:'#1463ff', pitcher:'power',   bat:1.05, pit:1.06, desc:'投打のバランスが良い優勝候補'},
-  {name:'港町シーガルズ', short:'港町', color:'#16a39b', pitcher:'finesse', bat:.94,  pit:1.10, desc:'技巧派投手を中心にした守りの野球'},
-  {name:'北嶺ベアーズ',   short:'北嶺', color:'#8a5a33', pitcher:'heat',    bat:1.12, pit:.92,  desc:'一発のある強力打線'},
-  {name:'紅葉フォックス', short:'紅葉', color:'#e0452b', pitcher:'junk',    bat:1.00, pit:1.00, desc:'緩急でかわす粘りのチーム'},
-  {name:'雷鳴サンダース', short:'雷鳴', color:'#d9a400', pitcher:'heat',    bat:1.06, pit:.98,  desc:'速球派エースと勢いのある打線'},
-  {name:'黒潮シャークス', short:'黒潮', color:'#3a4a6b', pitcher:'finesse', bat:.92,  pit:1.00, desc:'若手が育つ再建中のチーム'},
+  {name:'青空ウィングス', short:'青空', color:'#1463ff', bat:1.04, pit:1.05, desc:'投打のバランスが良い優勝候補'},
+  {name:'港町シーガルズ', short:'港町', color:'#16a39b', bat:.95,  pit:1.09, desc:'投手陣を中心にした守りの野球'},
+  {name:'北嶺ベアーズ',   short:'北嶺', color:'#8a5a33', bat:1.10, pit:.93,  desc:'一発のある強力打線'},
+  {name:'紅葉フォックス', short:'紅葉', color:'#e0452b', bat:1.00, pit:1.00, desc:'粘り強く戦う中堅チーム'},
+  {name:'雷鳴サンダース', short:'雷鳴', color:'#d9a400', bat:1.06, pit:.98,  desc:'速球派エースと勢いのある打線'},
+  {name:'黒潮シャークス', short:'黒潮', color:'#3a4a6b', bat:.93,  pit:1.00, desc:'若手が育つ再建中のチーム'},
 ];
-const PN_KEY = 'furusuma-pennant-v1', PN_INNINGS = 3, PN_LENS = [5, 10, 15];
+const PN_KEY = 'furusuma-pennant-v1', PN_VER = 2, PN_LENS = [5, 10, 15];
+const SURNAMES = ['佐藤','鈴木','高橋','田中','伊藤','渡辺','山本','中村','小林','加藤','吉田','山田','佐々木','山口','松本','井上','木村','林','清水','山崎',
+  '森','池田','橋本','阿部','石川','山下','中島','石井','小川','前田','岡田','長谷川','藤田','後藤','近藤','村上','遠藤','青木','坂本','斉藤',
+  '福田','太田','西村','藤井','岡本','藤原','三浦','松田','中川','中野','原田','小野','田村','竹内','金子','和田','中山','石田','上田','森田',
+  '柴田','酒井','工藤','横山','宮崎','宮本','内田','高木','安藤','谷口','大野','丸山','今井','河野','藤本','村田','武田','上野','杉山','増田'];
+const POSITIONS = ['捕','一','二','三','遊','左','中','右'];
 let season = null, pnPick = 0, pnLen = 10;
 try{ season = JSON.parse(localStorage.getItem(PN_KEY)) || null; }catch(e){ season = null; }
-if(season && (season.v !== 1 || !Array.isArray(season.schedule))) season = null;
+if(season && (season.v !== PN_VER || !Array.isArray(season.schedule) || !season.rosters)) season = null;
 function saveSeason(){ try{ season ? localStorage.setItem(PN_KEY, JSON.stringify(season)) : localStorage.removeItem(PN_KEY); }catch(e){} }
 
-const stars = v => '★'.repeat(clamp(Math.round((v - .85) / .09) + 1, 1, 4)).padEnd(4, '☆');
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const shuffle = a => { for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const stars = v => '★'.repeat(clamp(Math.round((v - .85) / .08) + 1, 1, 4)).padEnd(4, '☆');
+const typeName = id => (PITCHERS.find(p => p.id === id) || PITCHERS[0]).name;
+
+// 選手名簿：野手（自分のチームは8人＋あなた、ほかは9人）、先発5人、中継ぎ4人＋抑え
+function makeRoster(ti, isMine){
+  const t = TEAMS[ti], names = shuffle(SURNAMES.slice());
+  const bat = (isMine ? POSITIONS : POSITIONS.concat('指')).map(pos => ({
+    name:names.pop(), pos, con:+(t.bat * rnd(.86, 1.14)).toFixed(3), pow:+(t.bat * rnd(.65, 1.4)).toFixed(3)}));
+  const pit = role => ({name:names.pop(), type:pick(PITCHERS).id, stuff:+(t.pit * rnd(.88, 1.12)).toFixed(3), role});
+  return {bat, sp:[0,1,2,3,4].map(() => pit('先発')), rp:[0,1,2,3].map(() => pit('中継ぎ')).concat(pit('抑え'))};
+}
 // 総当たりの日程（円形方式）。周ごとにホームとビジターを入れ替える
 function makeSchedule(cycles){
   const n = TEAMS.length, rounds = [];
@@ -1835,9 +1896,11 @@ function makeSchedule(cycles){
   }
   return rounds;
 }
+const newStats = () => ({games:0, pa:0, ab:0, h:0, d2:0, d3:0, hr:0, rbi:0, bb:0, so:0});
 function newSeason(team, len){
-  season = {v:1, team, len, round:0, schedule:makeSchedule(len / (TEAMS.length - 1)),
-    table:TEAMS.map(() => ({w:0, l:0, d:0, rf:0, ra:0})), stats:{pa:0, hits:0, hr:0, k:0, ra:0, games:0}, log:[]};
+  season = {v:PN_VER, team, len, round:0, schedule:makeSchedule(len / (TEAMS.length - 1)),
+    rosters:TEAMS.map((_, i) => makeRoster(i, i === team)),
+    table:TEAMS.map(() => ({w:0, l:0, d:0, rf:0, ra:0})), stats:newStats(), log:[]};
   saveSeason();
 }
 const pnMatch = () => season.schedule[season.round].find(([h, a]) => h === season.team || a === season.team);
@@ -1854,18 +1917,164 @@ function standings(){
     return {i, rank:rank + 1, t, gb: rank ? ((top.w - t.w) + (t.l - top.l)) / 2 : null};
   });
 }
-// CPU同士の試合：1イニングごとの得点をポアソン分布で決める
-function poisson(l){ const L = Math.exp(-l); let k = 0, p = 1; do{ k++; p *= Math.random(); }while(p > L); return k - 1; }
-function simGame(h, a){
-  const H = TEAMS[h], A = TEAMS[a];
-  let hs = 0, as = 0;
-  for(let i = 0; i < PN_INNINGS; i++){
-    as += poisson(.5 * A.bat / H.pit);
-    if(i === PN_INNINGS - 1 && hs > as) break;   // 最終回の裏は不要
-    hs += poisson(.5 * H.bat / A.pit);
-  }
-  return [hs, as];
+
+/* ---------- 試合エンジン（1打席ずつ） ---------- */
+const MAX_INN = 12;   // 延長は12回まで、決着しなければ引き分け
+function newGame(h, a, userTeam, interactive){
+  const side = ti => {
+    const R = season.rosters[ti], order = shuffle(R.bat.slice());
+    if(ti === userTeam) order.splice(3, 0, {name:'あなた', pos:'指', con:1.02, pow:1.15, user:true});
+    const sp = pick(R.sp);
+    return {ti, order, idx:0, p:{...sp, bf:0, runs:0, limit:Math.round(rnd(22, 31))},
+      pen:shuffle(R.rp.filter(x => x.role !== '抑え')), closer:R.rp.find(x => x.role === '抑え'), runs:0, hits:0, line:[]};
+  };
+  return {T:{home:side(h), away:side(a)}, half:0, outs:0, bases:[null, null, null], halfRuns:0, halfStart:true,
+    over:false, userTeam, interactive, me:newStats(), log:[], loggedHalf:-1};
 }
+const batSide = G => G.half % 2 ? G.T.home : G.T.away;
+const fldSide = G => G.half % 2 ? G.T.away : G.T.home;
+const inningOf = G => Math.floor(G.half / 2) + 1;
+const halfName = G => `${inningOf(G)}回${G.half % 2 ? '裏' : '表'}`;
+const curBatter = G => batSide(G).order[batSide(G).idx];
+function runnersOf(G){
+  const n = ['一塁', '二塁', '三塁'].filter((_, i) => G.bases[i]);
+  return !n.length ? '走者なし' : n.length === 3 ? '満塁' : n.join('・');
+}
+function glog(G, text, cls){ G.log.push({text, cls:cls || ''}); }
+// 投手交代：球数（対戦打者数）の限界、打ち込まれたとき、9回以降のリードした場面では抑え
+function prePA(G){
+  if(G.loggedHalf !== G.half){
+    G.loggedHalf = G.half;
+    glog(G, `${halfName(G)}　${TEAMS[batSide(G).ti].short}の攻撃`, 'hd');
+  }
+  const F = fldSide(G), B = batSide(G), p = F.p, lead = F.runs - B.runs;
+  let next = null;
+  if(G.halfStart && inningOf(G) >= 9 && lead >= 1 && lead <= 3 && F.closer && p !== F.closer && !F.closerUsed){ next = F.closer; F.closerUsed = true; }
+  else if(p.bf >= p.limit || (p.role === '先発' && p.runs >= 5 && p.bf >= 12) || (p.role !== '先発' && p.runs >= 3)){
+    next = F.pen.shift() || (!F.closerUsed && F.closer ? (F.closerUsed = true, F.closer) : null);
+  }
+  if(next){
+    F.p = {...next, bf:0, runs:0, limit:next.role === '抑え' ? 7 : Math.round(rnd(3, 8))};
+    glog(G, `◇ ${TEAMS[F.ti].short}、ピッチャー交代　${p.name} → ${F.p.name}（${F.p.role}）`, 'chg');
+  }
+  G.halfStart = false;
+}
+// 打者と投手の能力から打席の結果を決める
+function rollPA(b, p){
+  const h = b.con / p.stuff, pw = b.pow / p.stuff;
+  const w = [['K', .185 / h], ['BB', .085], ['1B', .148 * h], ['2B', .044 * h * Math.sqrt(pw)], ['3B', .005 * h],
+    ['HR', .026 * pw * pw], ['GO', .23], ['FO', .19], ['LO', .055], ['PO', .03]];
+  let r = Math.random() * w.reduce((a, x) => a + x[1], 0);
+  for(const [k, v] of w){ if((r -= v) <= 0) return k; }
+  return 'GO';
+}
+// 走者を進める。返り値は {runs, outs, note}
+function advance(G, code){
+  const b = G.bases, out0 = G.outs;
+  let runs = 0, outs = 0, note = '';
+  const score = i => { if(b[i]){ b[i] = null; runs++; } };
+  const force = () => {   // 四球・内野安打：押し出しで1つずつ進む
+    if(b[0]){ if(b[1]){ if(b[2]) runs++; b[2] = b[1]; } b[1] = b[0]; }
+    b[0] = 'B';
+  };
+  switch(code){
+    case 'K': case 'LO': case 'PO': outs = 1; break;
+    case 'BB': case 'IH': force(); break;
+    case '1B':
+      score(2);
+      if(b[1]){ if(Math.random() < .6) score(1); else { b[2] = b[1]; b[1] = null; } }
+      if(b[0]){ if(!b[2] && Math.random() < .3) b[2] = b[0]; else b[1] = b[0]; b[0] = null; }
+      b[0] = 'B'; break;
+    case '2B':
+      score(2); score(1);
+      if(b[0]){ if(Math.random() < .4) score(0); else { b[2] = b[0]; b[0] = null; } }
+      b[1] = 'B'; break;
+    case '3B': score(2); score(1); score(0); b[2] = 'B'; break;
+    case 'HR': score(2); score(1); score(0); runs++; break;
+    case 'GO':
+      if(b[0] && out0 < 2 && Math.random() < .55){
+        outs = 2; note = 'ダブルプレー'; b[0] = null;
+        if(out0 + 2 < 3){ score(2); if(b[1]){ b[2] = b[1]; b[1] = null; } }
+      } else {
+        outs = 1;
+        if(out0 + 1 < 3){
+          if(b[2] && Math.random() < .5){ score(2); note = '間に1点'; }
+          if(b[1] && !b[2]){ b[2] = b[1]; b[1] = null; }
+          if(b[0] && !b[1]){ b[1] = b[0]; b[0] = null; }
+        }
+      }
+      break;
+    case 'FO':
+      outs = 1;
+      if(out0 < 2){
+        if(b[2] && Math.random() < .75){ score(2); note = '犠牲フライ'; }
+        if(b[1] && !b[2] && Math.random() < .3){ b[2] = b[1]; b[1] = null; }
+      }
+      break;
+  }
+  G.outs += outs;
+  return {runs, outs, note};
+}
+const HIT_CODES = ['1B', 'IH', '2B', '3B', 'HR'];
+function simText(code, runs){
+  const of = pick(['レフト', 'センター', 'ライト']);
+  switch(code){
+    case 'K': return pick(['空振り三振', '空振り三振', '見逃し三振']);
+    case 'BB': return 'フォアボール';
+    case '1B': return `${of}前ヒット`;
+    case 'IH': return '内野安打';
+    case '2B': return `${pick(['レフト線', '左中間', '右中間', 'ライト線', 'センター'])}へのツーベース`;
+    case '3B': return `${pick(['右中間', '左中間', 'ライト線'])}を破るスリーベース`;
+    case 'HR': return `${pick(['レフトスタンド', 'ライトスタンド', 'バックスクリーン', '左中間スタンド'])}へ${['ソロ', 'ソロ', '2ラン', '3ラン', '満塁'][runs]}ホームラン`;
+    case 'GO': return `${pick(['サード', 'ショート', 'セカンド', 'ファースト', 'ピッチャー'])}ゴロ`;
+    case 'FO': return `${of}フライ`;
+    case 'LO': return `${pick(['ショート', 'セカンド', 'サード', 'センター'])}ライナー`;
+    case 'PO': return `${pick(['キャッチャー', 'ファースト', 'サード', 'セカンド'])}フライ`;
+  }
+}
+// 1打席を確定させる（自動の打席・あなたの打席の共通処理）。text: あなたの打席では実際の結果名
+function finishPA(G, code, text){
+  const B = batSide(G), F = fldSide(G), bt = B.order[B.idx], no = B.idx + 1;
+  G.lastHalf = G.half;
+  const res = advance(G, code);
+  const hit = HIT_CODES.includes(code);
+  if(!text) text = simText(code, res.runs);
+  if(res.note) text += `（${res.note}）`;
+  B.runs += res.runs; G.halfRuns += res.runs; F.p.bf++; F.p.runs += res.runs;
+  if(hit) B.hits++;
+  if(bt.user && G.interactive){
+    const M = G.me; M.pa++;
+    if(code !== 'BB' && res.note !== '犠牲フライ') M.ab++;
+    if(hit) M.h++;
+    if(code === '2B') M.d2++; if(code === '3B') M.d3++; if(code === 'HR') M.hr++;
+    if(code === 'BB') M.bb++; if(code === 'K') M.so++;
+    if(res.note !== 'ダブルプレー') M.rbi += res.runs;
+  }
+  const mine = B.ti === G.userTeam;
+  glog(G, `${no}番 ${bt.name}：${text}${res.runs ? `　${res.runs}点` : ''}`, (res.runs ? 'sc' + (mine ? ' mine' : '') : '') + (bt.user ? ' me' : ''));
+  B.idx = (B.idx + 1) % 9;
+  const inn = inningOf(G), H = G.T.home, A = G.T.away;
+  let walkoff = false;
+  if(G.half % 2 && inn >= 9 && H.runs > A.runs){   // サヨナラ
+    walkoff = true; G.over = true; H.line.push(G.halfRuns);
+    glog(G, `サヨナラ！ ${TEAMS[H.ti].short}の勝利`, 'hd');
+  } else if(G.outs >= 3){
+    B.line.push(G.halfRuns);
+    G.half++; G.outs = 0; G.bases = [null, null, null]; G.halfRuns = 0; G.halfStart = true;
+    const nInn = inningOf(G);
+    if(G.half % 2 && nInn >= 9 && H.runs > A.runs){ G.over = true; H.line.push('X'); }
+    else if(G.half % 2 === 0 && nInn - 1 >= 9 && (H.runs !== A.runs || nInn - 1 >= MAX_INN)) G.over = true;
+  }
+  if(G.over && !walkoff) glog(G, H.runs === A.runs ? `試合終了　${MAX_INN}回引き分け` : '試合終了', 'hd');
+  return {runs:res.runs, hit, code, text, changed:G.half, walkoff};
+}
+function simPA(G){ const bt = curBatter(G); return finishPA(G, rollPA(bt, fldSide(G).p)); }
+function simWholeGame(h, a, userTeam){
+  const G = newGame(h, a, userTeam, false);
+  for(let n = 0; !G.over && n < 400; n++){ prePA(G); simPA(G); }
+  return [G.T.home.runs, G.T.away.runs];
+}
+
 function applyGame(h, a, hs, as){
   const H = season.table[h], A = season.table[a];
   H.rf += hs; H.ra += as; A.rf += as; A.ra += hs;
@@ -1877,7 +2086,7 @@ function finishRound(my, op, auto){
   applyGame(h, a, home ? my : op, home ? op : my);
   season.schedule[season.round].forEach(([x, y]) => {
     if(x === h && y === a) return;
-    const [xs, ys] = simGame(x, y); applyGame(x, y, xs, ys);
+    const [xs, ys] = simWholeGame(x, y, -1); applyGame(x, y, xs, ys);
   });
   season.log.push({n:season.round + 1, opp:home ? a : h, home, my, op, auto:!!auto});
   season.round++;
@@ -1885,8 +2094,17 @@ function finishRound(my, op, auto){
 }
 const myRank = () => standings().find(r => r.i === season.team).rank;
 const recordText = () => { const t = season.table[season.team]; return `${t.w}勝${t.l}敗${t.d}分`; };
+const avgText = (h, ab) => ab ? (h / ab).toFixed(3).replace(/^0/, '') : '.000';
+function lineText(M){
+  const parts = [`${M.ab}打数${M.h}安打`];
+  if(M.hr) parts.push(`${M.hr}本塁打`);
+  if(M.rbi) parts.push(`${M.rbi}打点`);
+  if(M.bb) parts.push(`${M.bb}四球`);
+  if(M.so) parts.push(`${M.so}三振`);
+  return parts.join(' ');
+}
 
-// ---- 画面 ----
+/* ---------- ペナント画面 ---------- */
 (function buildPennantUI(){
   TEAMS.forEach((t, i) => {
     const b = document.createElement('button');
@@ -1919,22 +2137,23 @@ function renderPennant(){
       <p class="detail">${champ === season.team ? 'おめでとう！ リーグ優勝です！' : `${me.short}は${rank}位（${recordText()}）でした`}</p>`;
   } else {
     const [h, a] = pnMatch();
-    $('pnNext').innerHTML = `<p class="sec-label">次の試合（3イニング制）</p>
+    $('pnNext').innerHTML = `<p class="sec-label">次の試合（9イニング制）</p>
       <div class="matchup"><b>${teamTag(a)}${TEAMS[a].short}</b><span>vs</span><b>${teamTag(h)}${TEAMS[h].short}</b></div>
-      <p class="detail" style="min-height:0">${h === season.team ? 'ホームゲーム（後攻）' : 'ビジターゲーム（先攻）'} ／ ${season.round ? `${me.short}は現在${myRank()}位 ${recordText()}` : '開幕戦'}</p>`;
+      <p class="detail" style="min-height:0">${h === season.team ? 'ホームゲーム（後攻）' : 'ビジターゲーム（先攻）'} ／ ${season.round ? `${me.short}は現在${myRank()}位 ${recordText()}` : '開幕戦'}<br>先発投手は試合当日に発表</p>`;
   }
   $('pnTable').innerHTML = '<tr><th></th><th style="text-align:left">チーム</th><th>試</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>差</th></tr>' +
     standings().map(({i, rank, t, gb}) => `<tr class="${i === season.team ? 'mine' : ''}"><td>${rank}</td><td class="tn">${teamTag(i)}${TEAMS[i].short}</td>
       <td>${t.w + t.l + t.d}</td><td>${t.w}</td><td>${t.l}</td><td>${t.d}</td><td>${pct(t).toFixed(3).replace(/^0/, '')}</td><td>${gb == null ? '-' : gb.toFixed(1)}</td></tr>`).join('');
-  const S = season.stats, avg = S.pa ? (S.hits / S.pa).toFixed(3).replace(/^0/, '') : '.000';
+  const S = season.stats;
   $('pnStats').textContent = S.games
-    ? `自分でプレイした${S.games}試合：${S.pa}打席 ${S.hits}安打（打率${avg}）本塁打${S.hr} ／ 奪三振${S.k} 失点${S.ra}`
-    : 'まだ自分でプレイした試合はありません';
+    ? `打率${avgText(S.h, S.ab)}　${S.hr}本塁打　${S.rbi}打点\n${S.games}試合 ${S.pa}打席 ${S.ab}打数 ${S.h}安打（二塁打${S.d2}・三塁打${S.d3}） ${S.bb}四球 ${S.so}三振`
+    : 'まだ出場した試合はありません';
+  $('pnStats').style.whiteSpace = 'pre-line';
   const log = season.log.slice(-6).reverse();
   $('pnLogLabel').hidden = !log.length;
   $('pnLog').innerHTML = log.map(g => {
     const [c, m] = g.my > g.op ? ['w', '○'] : g.my < g.op ? ['l', '●'] : ['d', '△'];
-    return `<li><span class="wl ${c}">${m}</span><span>第${g.n}戦 ${g.my}−${g.op} vs ${TEAMS[g.opp].short}（${g.home ? 'ホーム' : 'ビジター'}）${g.auto ? ' ／ 自動' : ''}</span></li>`;
+    return `<li><span class="wl ${c}">${m}</span><span>第${g.n}戦 ${g.my}−${g.op} vs ${TEAMS[g.opp].short}（${g.home ? 'ホーム' : 'ビジター'}）${g.line ? ' ／ ' + g.line : g.auto ? ' ／ 欠場（自動）' : ''}</span></li>`;
   }).join('');
 }
 function openPennant(){ leaveOnline(); phase = 'pennant'; renderPennant(); showOnly('pennant'); }
@@ -1944,96 +2163,193 @@ function setPnInput(useSensor){
   $('lbSensor').setAttribute('aria-pressed', useSensor); $('lbTap').setAttribute('aria-pressed', !useSensor);
 }
 
-// ---- CPUとの試合 ----
-function cpuNet(){
+/* ---------- 試合画面（自動で進む） ---------- */
+function localNet(){
   const timers = new Set();
-  const later = (fn, ms) => { const id = setTimeout(() => { timers.delete(id); fn(); }, ms); timers.add(id); };
-  return {
-    later,
-    send: m => {
-      if(!online || !online.cpu) return;
-      if(m.t === 'pitch') later(() => online && hostApply(cpuBat(m.p)), travelFor(m.p.kmh) * 1000 + 80);   // 自分が投げた球にCPUが打つ
-      else if(m.t === 'result') hostApply(m.r);                                                           // ビジターのときの打撃結果
-    },
-    close: () => { timers.forEach(clearTimeout); timers.clear(); },
-  };
-}
-// CPUの投球：チームの投手タイプから球種を選び、カウントに応じてストライクを取りにくる
-function cpuPitch(){
-  const tm = TEAMS[online.cpu.opp], pc = PITCHERS.find(p => p.id === tm.pitcher) || PITCHERS[0], st = online.state;
-  let r = Math.random(), p = pc.pitches[0];
-  for(const x of pc.pitches){ if((r -= x.w) <= 0){ p = x; break; } }
-  const kmh = Math.round(p.kmh[0] + Math.random() * (p.kmh[1] - p.kmh[0]));
-  const pStrike = clamp(.58 + (tm.pit - 1) * .5 + (st.balls === 3 ? .2 : 0) - (st.strikes === 2 && st.balls < 2 ? .15 : 0), .3, .9);
-  let fx, fy;
-  if(Math.random() < pStrike){ fx = (Math.random() * 2 - 1) * 56; fy = (Math.random() * 2 - 1) * 72; }
-  else if(Math.random() < .5){ fx = (Math.random() < .5 ? -1 : 1) * (70 + Math.random() * 24); fy = (Math.random() * 2 - 1) * 80; }
-  else { fx = (Math.random() * 2 - 1) * 64; fy = (Math.random() < .35 ? -1 : 1) * (85 + Math.random() * 24); }
-  return {name:p.name, kmh, fx, fy, inZone: Math.abs(fx) <= 66 && Math.abs(fy) <= 81, snd:p.snd, dx:p.dx, by:tm.short};
-}
-function cpuThrow(){
-  if(!online || !online.cpu || !iBat() || phase !== 'wait') return;
-  pendingPitch = cpuPitch(); tryStartPitch();
-}
-// CPUの打撃：投げるモードの打者AIを、相手チームの打力で使う
-function cpuBat(pd){
-  const st = online.state, res = batterDecide(pd.fx, pd.fy, pd.kmh, st, TEAMS[online.cpu.opp].bat);
-  prevKmh = pd.kmh;
-  const pick = a => a[Math.floor(Math.random() * a.length)];
-  const r = {pitch:{name:pd.name, kmh:pd.kmh, fx:pd.fx, fy:pd.fy, inZone:pd.inZone}};
-  if(!res.swing) r.kind = 'take';
-  else if(!res.contact) r.kind = 'whiff';
-  else if(res.outcome === 'foul') r.kind = 'foul';
-  else {
-    r.kind = 'inplay'; r.snd = res.outcome === 'HR' ? 'homer' : 'hit';
-    r.outcome = {HR:'ホームラン', '1B':'ヒット', '2B':'ツーベース', '3B':'スリーベース',
-      'ゴロ':pick(['サード', 'ショート', 'セカンド', 'ファースト']) + 'ゴロ',
-      'フライ':pick(['レフト', 'センター', 'ライト']) + 'フライ',
-      'ライナー':pick(['ショート', 'セカンド', 'サード', 'センター']) + 'ライナー'}[res.outcome];
-  }
-  return r;
-}
-function pennantTrack(myBat, r, label, done, runs){
-  const S = online.cpu.stats;
-  if(myBat){
-    if(!done) return;
-    S.pa++;
-    if(['ヒット', '内野安打', 'ツーベース', 'スリーベース', 'ホームラン'].includes(r.outcome)) S.hits++;
-    if(r.outcome === 'ホームラン') S.hr++;
-  } else {
-    if(/三振/.test(label)) S.k++;
-    S.ra += runs;
-  }
+  const later = (fn, ms) => { const id = setTimeout(() => { timers.delete(id); fn(); }, ms); timers.add(id); return id; };
+  return {later, send(){}, close: () => { timers.forEach(clearTimeout); timers.clear(); }};
 }
 function startPennantGame(){
   if(!season || pnDone()) return;
   leaveOnline();
   prepareInput();
-  const [h, a] = pnMatch(), home = h === season.team;
-  online = {me: home ? 'host' : 'guest', state:null, innings:PN_INNINGS,
-    cpu:{my:season.team, opp: home ? a : h, recorded:false, stats:{pa:0, hits:0, hr:0, k:0, ra:0}}};
-  online.net = cpuNet();
-  hostStart();
+  const [h, a] = pnMatch();
+  const G = newGame(h, a, season.team, true);
+  online = {me:'host', state:null, net:localNet(), dh:{G, fast:false, count:{balls:0, strikes:0}, timer:null, shown:0}};
+  const mineSide = h === season.team ? G.T.home : G.T.away;
+  glog(G, `${TEAMS[a].short} − ${TEAMS[h].short}　試合開始`, 'hd');
+  glog(G, `先発　${TEAMS[a].short}：${G.T.away.p.name}（${typeName(G.T.away.p.type)}）　${TEAMS[h].short}：${G.T.home.p.name}（${typeName(G.T.home.p.type)}）`, 'chg');
+  glog(G, `${TEAMS[mineSide.ti].short}のスタメン　` + mineSide.order.map((b, i) => `${i + 1}.${b.name}(${b.pos})`).join(' '), 'chg');
+  call('プレイボール');
+  showOnly('dhgame'); renderDH();
+  online.dh.timer = online.net.later(dhLoop, 1800);
 }
-function pennantOver(){
-  const st = online.state, cpu = online.cpu, my = st.score[online.me], op = st.score[other(online.me)];
+function renderDHBoard(){
+  const D = online.dh, G = D.G, mine = G.T.home.ti === G.userTeam ? G.T.home : G.T.away, opp = mine === G.T.home ? G.T.away : G.T.home;
+  const inPA = !$('play').hidden;
+  $('bRow').hidden = false;
+  document.querySelectorAll('.lamp.b').forEach((l, i) => l.classList.toggle('on', inPA && i < D.count.balls));
+  document.querySelectorAll('.lamp.s').forEach((l, i) => l.classList.toggle('on', inPA && i < D.count.strikes));
+  document.querySelectorAll('.lamp.o').forEach((l, i) => l.classList.toggle('on', i < G.outs));
+  const h = G.over ? G.lastHalf : G.half;
+  $('stL1').textContent = '回'; $('stPa').textContent = (Math.floor(h / 2) + 1) + (h % 2 ? '裏' : '表');
+  $('stL2').textContent = TEAMS[mine.ti].short; $('stHit').textContent = mine.runs;
+  $('stL3').textContent = TEAMS[opp.ti].short; $('stHr').textContent = opp.runs;
+}
+function renderDH(){
+  const D = online.dh, G = D.G, n = Math.max(9, G.T.away.line.length, G.T.home.line.length, G.over ? 0 : inningOf(G));
+  const row = S => {
+    const cur = !G.over && batSide(G) === S;
+    let cells = '';
+    for(let i = 0; i < n; i++){
+      const v = i < S.line.length ? S.line[i] : cur && i === S.line.length ? G.halfRuns : '';
+      cells += `<td class="${cur && i === S.line.length ? 'cur' : ''}">${v}</td>`;
+    }
+    return `<tr class="${S.ti === G.userTeam ? 'mine' : ''}"><td class="tn">${teamTag(S.ti)}${TEAMS[S.ti].short}</td>${cells}<td class="tot">${S.runs}</td><td>${S.hits}</td></tr>`;
+  };
+  $('dhLine').innerHTML = `<tr><th></th>${[...Array(n)].map((_, i) => `<th>${i + 1}</th>`).join('')}<th>計</th><th>安</th></tr>` + row(G.T.away) + row(G.T.home);
+  ['dhB1', 'dhB2', 'dhB3'].forEach((id, i) => $(id).classList.toggle('on', !G.over && !!G.bases[i]));
+  if(G.over){
+    $('dhSit').textContent = '試合終了'; $('dhSub').textContent = `今日のあなた：${lineText(G.me)}`;
+  } else {
+    const F = fldSide(G), bt = curBatter(G);
+    $('dhSit').textContent = `${halfName(G)}　${G.outs}アウト　${runnersOf(G)}`;
+    $('dhSub').textContent = `投手 ${F.p.name}（${F.p.role}・${typeName(F.p.type)}）　打者 ${batSide(G).idx + 1}番 ${bt.name}\n今日のあなた：${G.me.pa ? lineText(G.me) : 'まだ打席なし'}`;
+    $('dhSub').style.whiteSpace = 'pre-line';
+  }
+  $('dhLog').innerHTML = G.log.slice(-60).reverse().map(e => `<li class="${e.cls}"></li>`).join('');
+  [...$('dhLog').children].forEach((li, i) => { li.textContent = G.log[G.log.length - 1 - i].text; if(i < G.log.length - D.shown) li.classList.add('new'); });
+  D.shown = G.log.length;
+  $('dhLog').scrollTop = 0;
+  $('btnDhFast').disabled = G.over;
+  renderDHBoard();
+}
+function dhLoop(){
+  const D = online && online.dh; if(!D) return;
+  const G = D.G;
+  clearTimeout(D.timer);
+  $('dhTurn').hidden = true;
+  for(let guard = 0; guard < 400; guard++){
+    if(G.over){ renderDH(); D.timer = online.net.later(dhFinish, 2400); return; }
+    prePA(G);
+    const bt = curBatter(G);
+    if(bt.user){
+      D.fast = false; renderDH();
+      const F = fldSide(G);
+      $('dhTurn').hidden = false;
+      $('dhTurnMain').textContent = `${halfName(G)} ${G.outs}アウト ${runnersOf(G)}`;
+      $('btnDhGo').textContent = `打席に入る（投手 ${F.p.name}・${typeName(F.p.type)}）`;
+      speak('ann', `${halfName(G)}、${runnersOf(G) === '走者なし' ? '' : runnersOf(G) + 'で、'}4番、指名打者の打席です`);
+      return;
+    }
+    const half = G.half, ev = simPA(G);
+    if(ev.code === 'HR' && !D.fast) sndCheer();
+    if(!D.fast){ renderDH(); D.timer = online.net.later(dhLoop, ev.changed !== half ? 1700 : ev.runs ? 1500 : 900); return; }
+  }
+  renderDH();
+}
+// ---- あなたの打席 ----
+function dhStartPA(){
+  const D = online && online.dh; if(!D || D.G.over) return;
+  clearTimeout(D.timer); initAudio();
+  const G = D.G, F = fldSide(G);
+  D.count = {balls:0, strikes:0};
+  $('dhTurn').hidden = true;
+  clearTimeout(nextTimer); if(pitch) clearTimeout(pitch.timeout); pitch = null;
+  showOnly('play'); showPitchView();
+  $('btnPause').hidden = true; $('btnRecal').hidden = true;
+  $('meterBox').hidden = mode !== 'sensor';
+  $('tapHint').hidden = mode !== 'tap';
+  $('meterName').textContent = 'スイング速度';
+  $('meterTh').style.left = (threshold / METER_MAX * 100) + '%';
+  setMsg('4番 DH', 'good');
+  $('detail').style.whiteSpace = 'pre-line';
+  $('detail').textContent = `${halfName(G)} ${G.outs}アウト ${runnersOf(G)}\n投手 ${F.p.name}（${typeName(F.p.type)}）`;
+  renderDHBoard();
+  phase = 'wait';
+  D.timer = online.net.later(dhPitch, 2400);
+}
+function dhPitch(){
+  const D = online && online.dh; if(!D || phase !== 'wait') return;
+  const G = D.G, p = fldSide(G).p, pc = PITCHERS.find(x => x.id === p.type) || PITCHERS[0], c = D.count;
+  let r = Math.random(), pt = pc.pitches[0];
+  for(const x of pc.pitches){ if((r -= x.w) <= 0){ pt = x; break; } }
+  const kmh = Math.round(pt.kmh[0] + Math.random() * (pt.kmh[1] - pt.kmh[0]) + (p.stuff - 1) * 15 - (p.bf > p.limit ? 3 : 0));
+  const pStrike = clamp(.58 + (p.stuff - 1) * .5 + (c.balls === 3 ? .2 : 0) - (c.strikes === 2 && c.balls < 2 ? .15 : 0), .3, .9);
+  let fx, fy;
+  if(Math.random() < pStrike){ fx = (Math.random() * 2 - 1) * 56; fy = (Math.random() * 2 - 1) * 72; }
+  else if(Math.random() < .5){ fx = (Math.random() < .5 ? -1 : 1) * (70 + Math.random() * 24); fy = (Math.random() * 2 - 1) * 80; }
+  else { fx = (Math.random() * 2 - 1) * 64; fy = (Math.random() < .35 ? -1 : 1) * (85 + Math.random() * 24); }
+  setMsg('', '');
+  throwPitch({name:pt.name, kmh, fx, fy, inZone:Math.abs(fx) <= 66 && Math.abs(fy) <= 81, snd:pt.snd, dx:pt.dx, by:p.name});
+}
+// 打った結果の名前から、走者の進め方を決める
+function outcomeCode(o){
+  if(o === 'ホームラン') return 'HR';
+  if(o === 'スリーベース') return '3B';
+  if(o === 'ツーベース') return '2B';
+  if(o === '内野安打') return 'IH';
+  if(o === 'ヒット') return '1B';
+  if(/ゴロ$/.test(o)) return 'GO';
+  if(/フライ$/.test(o)) return /^(レフト|センター|ライト)/.test(o) ? 'FO' : 'PO';
+  return 'LO';
+}
+function dhApply(r){
+  const D = online.dh, G = D.G, c = D.count, pd = r.pitch;
+  let end = null, label = '', cls = 'bad';
+  if(r.kind === 'take'){
+    if(pd.inZone){ c.strikes++; label = '見逃し'; call('ストライク'); }
+    else { c.balls++; label = 'ボール'; cls = 'good'; call('ボール'); }
+  } else if(r.kind === 'whiff'){ c.strikes++; label = '空振り'; call('空振り'); }
+  else if(r.kind === 'foul'){ if(c.strikes < 2) c.strikes++; label = 'ファウル'; call('ファウル'); }
+  else { end = {code:outcomeCode(r.outcome), label:r.outcome}; speak('ann', r.say); }
+  if(!end && c.strikes >= 3){ end = {code:'K', label:r.kind === 'take' ? '見逃し三振' : '空振り三振'}; call(end.label); }
+  if(!end && c.balls >= 4){ end = {code:'BB', label:'フォアボール'}; call('フォアボール'); }
+  const info = `${pd.name} ${pd.kmh}km/h ／ ${courseName(pd.fx, pd.fy)}${pd.inZone ? '' : '（ボール球）'}${r.bdetail ? '\n' + r.bdetail : ''}`;
+  if(!end){
+    renderDHBoard(); setMsg(label, cls);
+    $('detail').textContent = `${info}\n${c.balls}ボール ${c.strikes}ストライク`;
+    phase = 'wait'; D.timer = online.net.later(dhPitch, 2300);
+    return;
+  }
+  const halfBefore = G.half, res = finishPA(G, end.code, end.label);
+  const good = res.hit || end.code === 'BB';
+  setMsg(end.label, end.code === 'HR' ? 'big' : good ? 'good' : 'bad');
+  const after = res.walkoff ? 'サヨナラ！' : G.over ? '試合終了' : G.half !== halfBefore ? 'スリーアウト、チェンジ' : `${G.outs}アウト ${runnersOf(G)}`;
+  $('detail').textContent = `${info}\n${res.runs ? `${res.runs}打点！ ／ ` : ''}${after}`;
+  D.count = {balls:0, strikes:0}; renderDHBoard();
+  phase = 'owait';
+  D.timer = online.net.later(() => { if(!online || !online.dh) return; showOnly('dhgame'); renderDH(); D.timer = online.net.later(dhLoop, 900); },
+    end.code === 'HR' ? 4200 : 3200);
+}
+function dhFinish(){
+  const D = online && online.dh; if(!D) return;
+  const G = D.G, mine = G.T.home.ti === G.userTeam ? G.T.home : G.T.away, opp = mine === G.T.home ? G.T.away : G.T.home;
+  const my = mine.runs, op = opp.runs;
   call('ゲームセット');
   phase = 'over';
-  if(!cpu.recorded){
-    cpu.recorded = true;
+  if(!D.recorded){
+    D.recorded = true;
     const S = season.stats;
-    Object.keys(cpu.stats).forEach(k => S[k] += cpu.stats[k]); S.games++;
+    Object.keys(G.me).forEach(k => S[k] += G.me[k]); S.games++;
     finishRound(my, op, false);
+    season.log[season.log.length - 1].line = lineText(G.me);
+    saveSeason();
   }
   const res = my > op ? '勝ち！' : my < op ? '負け…' : '引き分け';
   const tail = pnDone()
     ? `シーズン終了！ ${TEAMS[season.team].short}は${myRank()}位${myRank() === 1 ? '、リーグ優勝！' : ''}`
-    : `通算 ${recordText()}（${myRank()}位）`;
-  $('overStats').textContent = `${TEAMS[cpu.my].short} ${my} − ${op} ${TEAMS[cpu.opp].short}\n${res}\n${tail}`;
+    : `チーム通算 ${recordText()}（${myRank()}位）`;
+  const S = season.stats;
+  $('overStats').textContent = `${TEAMS[G.T.away.ti].short} ${G.T.away.runs} − ${G.T.home.runs} ${TEAMS[G.T.home.ti].short}　${res}\n今日のあなた：${lineText(G.me)}\nシーズン：打率${avgText(S.h, S.ab)} ${S.hr}本塁打 ${S.rbi}打点\n${tail}`;
   $('overStats').style.whiteSpace = 'pre-line';
   $('btnAgain').textContent = 'ペナントに戻る';
   showOnly('over');
   try{ wakeLock && wakeLock.release(); }catch(e){}
+}
+function dhQuit(){
+  if(!confirm('この試合をやめますか？（結果は記録されません）')) return;
+  quitToMenu(); openPennant();
 }
 
 $('modePennant').addEventListener('click', openPennant);
@@ -2044,7 +2360,7 @@ $('btnPnNew').addEventListener('click', () => { newSeason(pnPick, pnLen); render
 $('btnPnPlay').addEventListener('click', startPennantGame);
 $('btnPnSim').addEventListener('click', () => {
   if(!season || pnDone()) return;
-  const [h, a] = pnMatch(), home = h === season.team, [hs, as] = simGame(h, a);
+  const [h, a] = pnMatch(), home = h === season.team, [hs, as] = simWholeGame(h, a, season.team);
   finishRound(home ? hs : as, home ? as : hs, true);
   renderPennant();
 });
@@ -2053,6 +2369,9 @@ $('btnPnReset').addEventListener('click', () => {
   if(!confirm('いまのシーズンの記録を消して、最初からやり直しますか？')) return;
   season = null; saveSeason(); renderPennant();
 });
+$('btnDhGo').addEventListener('click', dhStartPA);
+$('btnDhFast').addEventListener('click', () => { const D = online && online.dh; if(!D || D.G.over || !$('dhTurn').hidden) return; D.fast = true; dhLoop(); });
+$('btnDhQuit').addEventListener('click', dhQuit);
 
 /* ================= アプリ化（PWA） ================= */
 const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
@@ -2106,7 +2425,7 @@ $('btnTap2').addEventListener('click', goTap);
 $('btnBat').addEventListener('click', startGame);
 $('btnSkip').addEventListener('click', () => { threshold = 350; refPeak = 1100; throwAxis = null; startGame(); });
 $('btnAgain').addEventListener('click', () => {
-  if(online && online.cpu){ leaveOnline(); return openPennant(); }
+  if(online && online.dh){ leaveOnline(); return openPennant(); }
   if(online) return requestRematch();
   if(mode === 'sensor' && !gotMotion) mode = 'tap'; startGame();
 });
